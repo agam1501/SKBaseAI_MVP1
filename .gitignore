@@ -1,0 +1,27 @@
+# Env
+.env
+.env.local
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+.next/
+.turbo/
+out/
+
+# Supabase CLI
+supabase/.temp/
+**/supabase/.temp/
+
+# Misc
+.DS_Store
+*.log
