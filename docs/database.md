@@ -27,7 +27,8 @@ Core ticket data ingested from source systems.
 | cleaned_text | text | pre-processed for embedding |
 | resolution | text | how it was resolved |
 | root_cause | text | |
-| status / priority | text | |
+| status | enum | `OPEN` or `CLOSED` |
+| priority | text | |
 | is_resolved | bool | gates vector search candidates |
 | created_at / updated_at | timestamptz | |
 
@@ -53,6 +54,7 @@ LLM-extracted classification of tickets.
 | l1 / l2 / l3 | text | 3-level taxonomy hierarchy |
 | confidence_score | float | |
 | is_active | bool | set to false on re-enrichment (audit trail) |
+| taxonomy_assigned_at | timestamptz | when LLM assigned the taxonomy |
 
 ### ticket_proposals
 AI-generated resolution proposals.
@@ -62,9 +64,10 @@ AI-generated resolution proposals.
 | id | uuid PK | |
 | ticket_id | uuid FK → tickets | |
 | proposal_narrative | text | the generated proposal text |
-| similar_ticket_ids | text | JSON array of matched ticket IDs |
+| similar_ticket_ids | uuid[] | array of ticket_ids used as context |
 | is_latest | bool | only one true per ticket at a time |
 | llm_model_used | text | |
+| proposal_created_at | timestamptz | when the LLM generated this proposal |
 
 ### ticket_proposal_feedback
 Human feedback on proposals.
@@ -78,6 +81,7 @@ Human feedback on proposals.
 | reason_if_rejected | text | |
 | modified_narrative | text | user-edited version |
 | user_id | uuid | Supabase auth user |
+| feedback_created_at | timestamptz | when feedback was submitted |
 
 ## Vector Search Pattern (Phase 2)
 ```sql
