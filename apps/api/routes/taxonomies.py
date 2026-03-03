@@ -17,7 +17,8 @@ async def get_ticket_taxonomies(
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(TicketTaxonomy)
-        .where(TicketTaxonomy.ticket_id == ticket_id, TicketTaxonomy.is_active == True)
+        select(TicketTaxonomy).where(
+            TicketTaxonomy.ticket_id == ticket_id, TicketTaxonomy.is_active
+        )
     )
     return result.scalars().all()

@@ -1,7 +1,6 @@
 # Phase 2: pgvector cosine similarity search
 import uuid
 
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
