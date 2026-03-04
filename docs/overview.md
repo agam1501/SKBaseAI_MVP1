@@ -17,12 +17,16 @@ AI-powered IT ticket resolution. Ingests support tickets, enriches them with emb
 ```
 Browser
   → Vercel (Next.js)
-    → Supabase Auth  (login / JWT issued)
-    → Railway (FastAPI)  (JWT verified, DB queried)
-      → Supabase Postgres  (data read/write)
-      → Redis / ARQ Worker  (async enrichment — Phase 3)
-        → OpenAI API  (embeddings + LLM — Phase 3)
+    → Supabase Auth       (login / JWT issued as HTTP-only cookie)
+    → Next.js middleware  (cookie refresh + auth guard on every request)
+    → Next.js /api/v1/*  (BFF proxy — reads cookie, forwards JWT to Railway)
+      → Railway (FastAPI)  (JWT verified server-to-server, DB queried)
+        → Supabase Postgres  (data read/write)
+        → Redis / ARQ Worker  (async enrichment — Phase 3)
+          → OpenAI API  (embeddings + LLM — Phase 3)
 ```
+
+> Browser never calls Railway directly. See [docs/bff-auth.md](./bff-auth.md) for the full auth and proxy flow.
 
 ## Phase Status
 
