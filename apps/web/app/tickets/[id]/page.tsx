@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase";
+import { useParams } from "next/navigation";
 import { apiClient } from "@/lib/api-client";
 import ProposalCard from "@/components/ProposalCard";
 
@@ -11,31 +10,15 @@ type Proposal = { proposal_id: string; narrative: string; is_latest: boolean };
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
-  const supabase = createClient();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      const token = data.session?.access_token;
-      if (!token) return router.push("/login");
-
-      try {
-        const t = await apiClient.get<Ticket>(`/api/v1/tickets/${id}`, token);
-        setTicket(t);
-      } catch (e: any) {
-        setError(e.message);
-      }
-
-      try {
-        const p = await apiClient.get<Proposal>(`/api/v1/proposals/tickets/${id}/latest`, token);
-        setProposal(p);
-      } catch {
-        // no proposal yet — that's fine
-      }
+    apiClient.get<Ticket>(`/api/v1/tickets/${id}`).then(setTicket).catch((e: Error) => setError(e.message));
+    apiClient.get<Proposal>(`/api/v1/proposals/tickets/${id}/latest`).then(setProposal).catch(() => {
+      // no proposal yet — that's fine
     });
   }, [id]);
 

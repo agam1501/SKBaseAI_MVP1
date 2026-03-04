@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase";
 import { apiClient } from "@/lib/api-client";
 
 type Ticket = {
@@ -13,23 +11,11 @@ type Ticket = {
 };
 
 export default function TicketsPage() {
-  const router = useRouter();
-  const supabase = createClient();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      const token = data.session?.access_token;
-      if (!token) return router.push("/login");
-
-      try {
-        const data = await apiClient.get<Ticket[]>("/api/v1/tickets", token);
-        setTickets(data);
-      } catch (e: any) {
-        setError(e.message);
-      }
-    });
+    apiClient.get<Ticket[]>("/api/v1/tickets").then(setTickets).catch((e: Error) => setError(e.message));
   }, []);
 
   return (

@@ -3,9 +3,14 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
+from sqlalchemy import inspect, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
+from db import get_db
+from models import Ticket, TicketProposal, TicketProposalFeedback, TicketTaxonomy
 from routes import proposals, taxonomies, tickets
+from schemas import FeedbackRead, ProposalRead, TaxonomyRead, TicketRead
 
 app = FastAPI(title="SKBaseAI API", version="0.1.0")
 
@@ -20,14 +25,26 @@ app.add_middleware(
 _bearer = HTTPBearer()
 
 
+def _assert_schema_subset(orm_model, pydantic_schema):
+    orm_cols = {c.key for c in inspect(orm_model).mapper.columns}
+    schema_fields = set(pydantic_schema.model_fields.keys())
+    missing = schema_fields - orm_cols
+    assert not missing, f"{pydantic_schema.__name__} has fields not in ORM: {missing}"
+
+
 @app.on_event("startup")
-async def load_jwks():
-    """Fetch Supabase public keys on startup for ES256 token verification."""
+async def startup():
+    """Fetch Supabase public keys and validate Pydantic/ORM schema alignment."""
     url = f"{settings.supabase_url}/auth/v1/.well-known/jwks.json"
     async with httpx.AsyncClient() as client:
         resp = await client.get(url)
         resp.raise_for_status()
         app.state.jwks = resp.json().get("keys", [])
+
+    _assert_schema_subset(Ticket, TicketRead)
+    _assert_schema_subset(TicketProposal, ProposalRead)
+    _assert_schema_subset(TicketProposalFeedback, FeedbackRead)
+    _assert_schema_subset(TicketTaxonomy, TaxonomyRead)
 
 
 async def get_current_user(
@@ -68,6 +85,12 @@ async def get_current_user(
 @app.get("/health", tags=["meta"])
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/health/db", tags=["meta"])
+async def health_db(db: AsyncSession = Depends(get_db)):
+    await db.execute(text("SELECT 1"))
+    return {"status": "ok", "db": "connected"}
 
 
 app.include_router(tickets.router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
