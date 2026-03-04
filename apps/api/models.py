@@ -23,6 +23,7 @@ class Client(Base):
 
 class UserClient(Base):
     """Which clients a user (Supabase auth user_id) can access."""
+
     __tablename__ = "user_clients"
 
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
