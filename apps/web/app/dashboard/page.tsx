@@ -1,27 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase";
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const supabase = createClient();
+  const supabaseRef = useRef(createClient());
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
-        router.push("/login");
-      } else {
-        setEmail(data.user.email ?? null);
-      }
+    supabaseRef.current.auth.getUser().then(({ data }) => {
+      setEmail(data.user?.email ?? null);
     });
   }, []);
 
   async function signOut() {
-    await supabase.auth.signOut();
-    router.push("/login");
+    await supabaseRef.current.auth.signOut();
+    window.location.href = '/login';
   }
 
   return (
