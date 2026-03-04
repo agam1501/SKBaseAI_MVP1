@@ -5,7 +5,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
 from config import settings
-from routes import proposals, taxonomies, tickets
+from routes import clients, proposals, taxonomies, tickets
 
 app = FastAPI(title="SKBaseAI API", version="0.1.0")
 
@@ -70,6 +70,7 @@ async def health():
     return {"status": "ok"}
 
 
+app.include_router(clients.router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
 app.include_router(tickets.router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
 app.include_router(proposals.router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
 app.include_router(taxonomies.router, prefix="/api/v1", dependencies=[Depends(get_current_user)])

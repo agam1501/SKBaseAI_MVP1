@@ -5,6 +5,20 @@ from pydantic import BaseModel
 
 from models import TicketStatus
 
+# --- Clients ---
+
+
+class ClientRead(BaseModel):
+    client_id: uuid.UUID
+    name: str
+
+    model_config = {"from_attributes": True}
+
+
+class ClientCreate(BaseModel):
+    name: str
+
+
 # --- Tickets ---
 
 
