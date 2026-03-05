@@ -31,7 +31,12 @@ async function apiFetch<T>(
     const text = await res.text();
     throw new Error(`API ${res.status}: ${text}`);
   }
-  return res.json() as Promise<T>;
+  const contentType = res.headers.get("content-type");
+  const text = await res.text();
+  if (!text || (contentType?.includes("application/json") === false)) {
+    return undefined as T;
+  }
+  return JSON.parse(text) as T;
 }
 
 export const apiClient = {

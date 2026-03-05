@@ -117,8 +117,8 @@ export default function DashboardPage() {
                           setPickerOpen(false);
                         }}
                         className={`w-full text-left px-4 py-3 text-sm transition ${selectedClient?.client_id === c.client_id
-                            ? "bg-gray-100 font-medium"
-                            : "hover:bg-gray-50"
+                          ? "bg-gray-100 font-medium"
+                          : "hover:bg-gray-50"
                           }`}
                       >
                         {c.name}
