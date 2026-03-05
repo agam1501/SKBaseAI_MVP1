@@ -12,6 +12,26 @@ class Base(DeclarativeBase):
     pass
 
 
+class Client(Base):
+    __tablename__ = "clients"
+
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+
+
+class UserClient(Base):
+    """Which clients a user (Supabase auth user_id) can access."""
+
+    __tablename__ = "user_clients"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("clients.client_id"), primary_key=True
+    )
+
+
 class TicketStatus(str, enum.Enum):
     OPEN = "OPEN"
     CLOSED = "CLOSED"

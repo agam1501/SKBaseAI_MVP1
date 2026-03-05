@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config import settings
 from db import get_db
 from models import Ticket, TicketProposal, TicketProposalFeedback, TicketTaxonomy
-from routes import proposals, taxonomies, tickets
+from routes import clients, proposals, taxonomies, tickets
 from schemas import FeedbackRead, ProposalRead, TaxonomyRead, TicketRead
 
 app = FastAPI(title="SKBaseAI API", version="0.1.0")
@@ -93,6 +93,7 @@ async def health_db(db: AsyncSession = Depends(get_db)):
     return {"status": "ok", "db": "connected"}
 
 
+app.include_router(clients.router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
 app.include_router(tickets.router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
 app.include_router(proposals.router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
 app.include_router(taxonomies.router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
