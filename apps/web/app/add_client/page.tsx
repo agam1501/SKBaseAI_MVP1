@@ -26,7 +26,7 @@ export default function AddClientPage() {
       }
       await loadClients(data.session.access_token);
     });
-  }, [loadClients]);
+  }, [loadClients, router, supabase]);
 
   async function createNewClient() {
     setSubmitting(true);

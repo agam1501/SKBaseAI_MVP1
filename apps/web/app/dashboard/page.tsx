@@ -36,7 +36,7 @@ export default function DashboardPage() {
         loadClients(data.session.access_token);
       }
     });
-  }, [loadClients]);
+  }, [loadClients, router, supabase]);
 
   async function signOut() {
     await supabase.auth.signOut();

@@ -29,7 +29,7 @@ export default function TicketsPage() {
       if (!token) return;
       await loadClients(token);
     });
-  }, [loadClients]);
+  }, [loadClients, router, supabase]);
 
   useEffect(() => {
     if (!selectedClient) return;
@@ -46,7 +46,7 @@ export default function TicketsPage() {
         setError(e instanceof Error ? e.message : "Failed to load tickets");
       }
     });
-  }, [selectedClient]);
+  }, [selectedClient, supabase]);
 
   if (!clientsLoading && !selectedClient) {
     return (
