@@ -14,6 +14,38 @@ Never use port 5432 (Session Mode) with NullPool — it won't work with multiple
 
 ## Tables
 
+### clients
+Tenant/organization that owns tickets. Users are linked to clients via `user_clients`.
+
+| Column | Type | Notes |
+|---|---|---|
+| client_id | uuid PK | |
+| name | text | display name |
+
+### user_clients
+Which clients a user (Supabase auth user id = JWT `sub`) can access.
+
+| Column | Type | Notes |
+|---|---|---|
+| user_id | uuid PK | Supabase auth user id |
+| client_id | uuid PK FK → clients | |
+
+To create when missing:
+```sql
+CREATE TABLE IF NOT EXISTS clients (
+  client_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL
+);
+CREATE TABLE IF NOT EXISTS user_clients (
+  user_id uuid NOT NULL,
+  client_id uuid NOT NULL REFERENCES clients(client_id),
+  PRIMARY KEY (user_id, client_id)
+);
+-- Optional: insert default client and link a user to it
+INSERT INTO clients (client_id, name) VALUES ('00000000-0000-0000-0000-000000000001'::uuid, 'Default')
+ON CONFLICT (client_id) DO NOTHING;
+```
+
 ### tickets
 Core ticket data ingested from source systems.
 
