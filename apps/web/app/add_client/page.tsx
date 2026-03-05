@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function ClientsPage() {
+export default function AddClientPage() {
   const router = useRouter();
   const supabase = createClient();
   const { clients, selectedClient, setSelectedClient, loadClients, loading, error } =
@@ -45,6 +45,7 @@ export default function ClientsPage() {
       await loadClients(token);
       setSelectedClient(created);
       setName("");
+      router.push("/dashboard");
     } catch (e: unknown) {
       setLocalError(e instanceof Error ? e.message : "Failed to create client");
     } finally {
@@ -56,7 +57,7 @@ export default function ClientsPage() {
     <div className="min-h-screen p-8">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Clients</h1>
+          <h1 className="text-2xl font-bold">Add client</h1>
           <a href="/dashboard" className="text-sm underline text-gray-500">
             ← Back
           </a>
@@ -131,4 +132,3 @@ export default function ClientsPage() {
     </div>
   );
 }
-

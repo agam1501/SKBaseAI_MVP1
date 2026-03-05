@@ -65,7 +65,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between gap-4">
               <p className="text-sm text-gray-600">Choose a client to view their tickets.</p>
               <Link
-                href="/clients"
+                href="/add_client"
                 className="inline-flex items-center px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition"
               >
                 Add client
@@ -76,7 +76,7 @@ export default function DashboardPage() {
               <div className="bg-white rounded-xl shadow p-8 text-center">
                 <p className="text-gray-500 mb-4">You don’t have any clients yet.</p>
                 <Link
-                  href="/clients"
+                  href="/add_client"
                   className="inline-flex items-center px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition"
                 >
                   Add your first client
