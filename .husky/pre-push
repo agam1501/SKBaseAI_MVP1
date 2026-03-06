@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+# Optional: load husky env (created by npx husky init)
+[ -f "$(dirname -- "$0")/_/husky.sh" ] && . "$(dirname -- "$0")/_/husky.sh"
+
+# Run ruff format (Python) in apps/api (activate .venv if present)
+echo "Running ruff format..."
+ROOT="$(cd "$(dirname -- "$0")/.." && pwd)"
+if [ -f "$ROOT/apps/api/.venv/bin/activate" ]; then
+  . "$ROOT/apps/api/.venv/bin/activate" && (cd "$ROOT/apps/api" && ruff format .) || exit 1
+elif [ -f "$ROOT/.venv/bin/activate" ]; then
+  . "$ROOT/.venv/bin/activate" && (cd "$ROOT/apps/api" && ruff format .) || exit 1
+else
+  (cd "$ROOT/apps/api" && ruff format .) || exit 1
+fi
+
+# Run Prettier (Node) in apps/web
+echo "Running npm format..."
+(cd apps/web && npm run format) || exit 1
+
+# Fail if formatters changed any files (so they get committed before push)
+if ! git diff --quiet; then
+  echo ""
+  echo "⚠️  Formatters changed some files. Please commit the changes and push again."
+  exit 1
+fi
