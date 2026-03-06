@@ -1,13 +1,17 @@
+import csv
+import io
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
 from db import get_db
-from models import Ticket, UserClient
-from schemas import TicketCreate, TicketRead
+from models import Ticket, TicketStatus, UserClient
+from schemas import TicketCreate, TicketRead, TicketUploadResult, TicketUploadRowError
 
 router = APIRouter(tags=["tickets"])
 
@@ -57,6 +61,92 @@ async def create_ticket(
     await db.commit()
     await db.refresh(ticket)
     return ticket
+
+
+def _norm(s: str | None) -> str | None:
+    if s is None:
+        return None
+    t = s.strip()
+    return t if t else None
+
+
+def _row_to_payload(row: dict[str, str]) -> tuple[dict | None, str | None]:
+    """Build a dict suitable for TicketCreate from a CSV row. Returns (payload, error_message)."""
+    # Normalize keys to lower for lookup
+    raw = {k.strip().lower(): v for k, v in row.items() if k}
+    short_desc = _norm(raw.get("short_desc"))
+    if not short_desc:
+        return None, "short_desc is required"
+    full_desc = _norm(raw.get("full_desc"))
+    external_id = _norm(raw.get("external_id"))
+    source_system = _norm(raw.get("source_system"))
+    resolution = _norm(raw.get("resolution"))
+    root_cause = _norm(raw.get("root_cause"))
+    priority = _norm(raw.get("priority"))
+    status_raw = _norm(raw.get("status"))
+    status = None
+    if status_raw:
+        u = status_raw.upper()
+        if u in ("OPEN", "CLOSED"):
+            status = TicketStatus.OPEN if u == "OPEN" else TicketStatus.CLOSED
+    is_resolved = status == TicketStatus.CLOSED if status is not None else False
+    payload = {
+        "short_desc": short_desc,
+        "full_desc": full_desc,
+        "external_id": external_id,
+        "source_system": source_system,
+        "resolution": resolution,
+        "root_cause": root_cause,
+        "priority": priority,
+        "status": status,
+        "is_resolved": is_resolved,
+    }
+    return payload, None
+
+
+@router.post("/tickets/upload", response_model=TicketUploadResult, status_code=201)
+async def upload_tickets_csv(
+    file: UploadFile = File(..., description="CSV file with ticket rows"),
+    db: AsyncSession = Depends(get_db),
+    client_id: uuid.UUID = Depends(get_effective_client_id),
+):
+    """Parse CSV in memory, validate each row with TicketCreate, insert valid rows. Does not store the CSV."""
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="File must be a CSV (filename ending in .csv)")
+    content = await file.read()
+    try:
+        text = content.decode("utf-8", errors="replace")
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"File could not be decoded as UTF-8: {e}"
+        ) from e
+    reader = csv.DictReader(io.StringIO(text))
+    if reader.fieldnames is None:
+        raise HTTPException(status_code=400, detail="CSV has no header row")
+    errors: list[TicketUploadRowError] = []
+    tickets_to_add: list[Ticket] = []
+    for row_index, row in enumerate(reader, start=2):
+        payload, row_error = _row_to_payload(row)
+        if row_error:
+            errors.append(TicketUploadRowError(row=row_index, message=row_error))
+            continue
+        try:
+            body = TicketCreate(**payload)
+        except ValidationError as e:
+            err_msg = e.errors()[0].get("msg", str(e)) if e.errors() else str(e)
+            errors.append(TicketUploadRowError(row=row_index, message=err_msg))
+            continue
+        tickets_to_add.append(Ticket(client_id=client_id, **body.model_dump()))
+    if not tickets_to_add:
+        result = TicketUploadResult(created=0, errors=errors)
+        return JSONResponse(content=result.model_dump(), status_code=422)
+    db.add_all(tickets_to_add)
+    try:
+        await db.commit()
+    except Exception as exc:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Bulk insert failed: {exc}") from exc
+    return TicketUploadResult(created=len(tickets_to_add), errors=errors)
 
 
 @router.get("/tickets", response_model=list[TicketRead])

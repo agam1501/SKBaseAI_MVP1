@@ -1,0 +1,6 @@
+short_desc,full_desc,external_id,source_system,status,priority
+"Login fails","User cannot log in with SSO",INC001,ServiceNow,OPEN,High
+"Slow dashboard","Dashboard takes 30s to load",INC002,ServiceNow,OPEN,Medium
+"Password reset broken","Reset link returns 404",INC003,Jira,CLOSED,High
+"API timeout","GET /users times out after 60s",INC004,ServiceNow,OPEN,Critical
+"Duplicate notifications","User receives same alert 3 times",INC005,Jira,CLOSED,Low
