@@ -94,36 +94,36 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-start justify-between flex-wrap gap-4">
-          <div className="space-y-3">
-            <h1 className="text-2xl font-bold">Home</h1>
-            {loading ? (
-              <span className="text-sm text-muted-foreground block">Loading clients…</span>
-            ) : (
-              <Select
-                value={selectedClient?.client_id ?? EMPTY_CLIENT_VALUE}
-                onValueChange={handleClientChange}
-              >
-                <SelectTrigger className="min-w-[200px]">
-                  <SelectValue placeholder="Select client…" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={EMPTY_CLIENT_VALUE}>Select client…</SelectItem>
-                  {clients.map((c) => (
-                    <SelectItem key={c.client_id} value={c.client_id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <h1 className="text-2xl font-bold">Home</h1>
           <div className="flex items-center gap-4 flex-wrap">
             <span className="text-sm text-muted-foreground">{email}</span>
-            <Button variant={"link"} onClick={signOut} className="text-sm p-0 h-auto">
+            <Button variant="link" onClick={signOut} className="text-sm p-0 h-auto">
               Sign out
             </Button>
           </div>
+        </div>
+        <div>
+          {loading ? (
+            <span className="text-sm text-muted-foreground">Loading clients…</span>
+          ) : (
+            <Select
+              value={selectedClient?.client_id ?? EMPTY_CLIENT_VALUE}
+              onValueChange={handleClientChange}
+            >
+              <SelectTrigger className="min-w-[200px]">
+                <SelectValue placeholder="Select client…" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={EMPTY_CLIENT_VALUE}>Select client…</SelectItem>
+                {clients.map((c) => (
+                  <SelectItem key={c.client_id} value={c.client_id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         {error && <p className="text-destructive text-sm">{error}</p>}
