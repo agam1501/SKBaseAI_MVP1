@@ -6,9 +6,9 @@ from jose import JWTError, jwt
 from sqlalchemy import inspect
 
 from config import settings
-from models import Ticket, TicketProposal, TicketProposalFeedback, TicketTaxonomy
+from models import Ticket, TicketProposal, TicketProposalFeedback, TicketTaxonomy, UserRoles
 from routes import clients, proposals, taxonomies, tickets
-from schemas import FeedbackRead, ProposalRead, TaxonomyRead, TicketRead
+from schemas import FeedbackRead, ProposalRead, TaxonomyRead, TicketRead, UserRoleRead
 
 app = FastAPI(title="SKBaseAI API", version="0.1.0")
 
@@ -43,6 +43,7 @@ async def startup():
     _assert_schema_subset(TicketProposal, ProposalRead)
     _assert_schema_subset(TicketProposalFeedback, FeedbackRead)
     _assert_schema_subset(TicketTaxonomy, TaxonomyRead)
+    _assert_schema_subset(UserRoles, UserRoleRead)
 
 
 async def get_current_user(

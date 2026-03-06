@@ -32,6 +32,21 @@ class UserClient(Base):
     )
 
 
+class UserRole(str, enum.Enum):
+    admin = "Admin"
+    responder = "Responder"
+    developer = "Developer"
+
+
+class UserRoles(Base):
+    __tablename__ = "user_roles"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    role: Mapped[UserRole] = mapped_column(
+        Enum(UserRole, name="user_role_enum", create_type=False), nullable=False
+    )
+
+
 class TicketStatus(str, enum.Enum):
     OPEN = "OPEN"
     CLOSED = "CLOSED"
