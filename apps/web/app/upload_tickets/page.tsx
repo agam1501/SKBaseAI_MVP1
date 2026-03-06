@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default function UploadTicketsPage() {
   const router = useRouter();
@@ -61,29 +63,28 @@ export default function UploadTicketsPage() {
               ? `Upload New Tickets for ${selectedClient.name}`
               : "Upload New Tickets"}
           </h1>
-          <Link
-            href="/dashboard"
-            className="text-sm text-gray-600 hover:text-gray-900 font-medium"
-          >
-            ← Back
-          </Link>
+          <Button variant="link" asChild className="text-muted-foreground">
+            <Link href="/dashboard">← Back</Link>
+          </Button>
         </div>
 
         {(clientsError || error) && (
-          <p className="text-red-600 text-sm">{clientsError ?? error}</p>
+          <p className="text-destructive text-sm">{clientsError ?? error}</p>
         )}
 
         {!selectedClient && (
-          <p className="text-gray-500 text-sm">Select a client on the dashboard to upload tickets.</p>
+          <p className="text-muted-foreground text-sm">Select a client on the dashboard to upload tickets.</p>
         )}
 
         {selectedClient && (
           <div className="flex flex-col items-center justify-center py-12">
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-8 space-y-6 w-full max-w-sm">
-              <h2 className="text-center text-sm font-semibold text-gray-700">Upload tickets (CSV)</h2>
-              <div className="flex flex-col items-center gap-4 w-full">
+            <Card className="w-full max-w-sm">
+              <CardHeader className="text-center pb-2">
+                <h2 className="text-sm font-semibold leading-none tracking-tight">Upload tickets (CSV)</h2>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center gap-4">
                 <label className="flex flex-col items-center gap-2 w-full cursor-pointer">
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-muted-foreground">
                     {uploadFile ? uploadFile.name : "No file chosen"}
                   </span>
                   <input
@@ -95,41 +96,41 @@ export default function UploadTicketsPage() {
                       setUploadResult(null);
                     }}
                   />
-                  <span className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300">
-                    Choose file
-                  </span>
+                  <Button type="button" variant="outline" asChild className="w-full max-w-[200px]">
+                    <span>Choose file</span>
+                  </Button>
                 </label>
-                <button
+                <Button
                   type="button"
                   disabled={!uploadFile || uploading}
                   onClick={handleUpload}
-                  className="w-full rounded-md bg-gray-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700"
+                  className="w-full"
                 >
                   {uploading ? "Uploading…" : "Upload"}
-                </button>
-              </div>
-              {uploadResult && (
-                <div className="text-sm space-y-1 text-center">
-                  {uploadResult.created > 0 && (
-                    <p className="text-green-700 font-medium">
-                      Created {uploadResult.created} ticket{uploadResult.created !== 1 ? "s" : ""}.
-                    </p>
-                  )}
-                  {uploadResult.errors.length > 0 && (
-                    <div className="text-left">
-                      <p className="text-amber-700 font-medium">Row errors:</p>
-                      <ul className="list-disc list-inside text-amber-800 mt-0.5">
-                        {uploadResult.errors.map((err, i) => (
-                          <li key={i}>
-                            Row {err.row}: {err.message}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                </Button>
+                {uploadResult && (
+                  <div className="text-sm space-y-1 text-center w-full">
+                    {uploadResult.created > 0 && (
+                      <p className="text-green-700 font-medium">
+                        Created {uploadResult.created} ticket{uploadResult.created !== 1 ? "s" : ""}.
+                      </p>
+                    )}
+                    {uploadResult.errors.length > 0 && (
+                      <div className="text-left">
+                        <p className="text-amber-700 font-medium">Row errors:</p>
+                        <ul className="list-disc list-inside text-amber-800 mt-0.5">
+                          {uploadResult.errors.map((err, i) => (
+                            <li key={i}>
+                              Row {err.row}: {err.message}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>

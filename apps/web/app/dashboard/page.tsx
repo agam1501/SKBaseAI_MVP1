@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 const EMPTY_CLIENT_VALUE = "__none__";
 
@@ -136,17 +137,14 @@ export default function DashboardPage() {
           <div className="mt-10 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Tickets for {selectedClient.name}</h2>
-              <Link
-                href="/upload_tickets"
-                className="inline-flex items-center rounded-md bg-gray-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700"
-              >
-                Upload
-              </Link>
+              <Button asChild>
+                <Link href="/upload_tickets">Upload</Link>
+              </Button>
             </div>
             {ticketsError && (
-              <p className="text-red-600 text-sm">{ticketsError}</p>
+              <p className="text-destructive text-sm">{ticketsError}</p>
             )}
-            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+            <Card className="overflow-hidden">
               <div className="overflow-x-auto">
                 {ticketsLoading ? (
                   <div className="px-4 py-8 text-center text-sm text-gray-500">
@@ -202,7 +200,7 @@ export default function DashboardPage() {
                   </table>
                 )}
               </div>
-            </div>
+            </Card>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
