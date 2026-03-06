@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 type Proposal = { proposal_id: string; narrative: string; is_latest: boolean };
 
@@ -29,30 +31,36 @@ export default function ProposalCard({ proposal }: { proposal: Proposal }) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow p-6 space-y-4">
-      <h2 className="font-semibold text-sm uppercase tracking-wide text-gray-400">AI Proposal</h2>
-      <p className="text-sm leading-relaxed">{proposal.narrative}</p>
+    <Card>
+      <CardHeader className="pb-2">
+        <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+          AI Proposal
+        </h2>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm leading-relaxed">{proposal.narrative}</p>
 
-      {!submitted ? (
-        <div className="flex gap-2">
-          <button
-            onClick={() => submitFeedback(true)}
-            disabled={loading}
-            className="px-4 py-2 bg-green-600 text-white text-sm rounded disabled:opacity-50"
-          >
-            Accept
-          </button>
-          <button
-            onClick={() => submitFeedback(false)}
-            disabled={loading}
-            className="px-4 py-2 border text-sm rounded disabled:opacity-50"
-          >
-            Reject
-          </button>
-        </div>
-      ) : (
-        <p className="text-sm text-gray-500">Feedback submitted.</p>
-      )}
-    </div>
+        {!submitted ? (
+          <div className="flex gap-2">
+            <Button
+              onClick={() => submitFeedback(true)}
+              disabled={loading}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Accept
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => submitFeedback(false)}
+              disabled={loading}
+            >
+              Reject
+            </Button>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Feedback submitted.</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
