@@ -3,6 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import func
 
 from config import settings
 from db import get_db
@@ -54,6 +55,19 @@ async def create_client(
     """Create a client and automatically grant the current user access to it."""
     user_id = _user_id(request)
     try:
+        # Case-insensitive duplicate name check among clients this user has access to
+        existing = await db.execute(
+            select(Client)
+            .join(UserClient, UserClient.client_id == Client.client_id)
+            .where(UserClient.user_id == user_id)
+            .where(func.lower(Client.name) == body.name.strip().lower())
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A client with this name already exists.",
+            )
+
         client = Client(name=body.name)
         db.add(client)
         await db.flush()  # ensure client_id is available
@@ -62,6 +76,9 @@ async def create_client(
         await db.commit()
         await db.refresh(client)
         return client
+    except HTTPException:
+        await db.rollback()
+        raise
     except Exception as exc:
         await db.rollback()
         raise HTTPException(
