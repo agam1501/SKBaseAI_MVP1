@@ -1,22 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase";
 import { apiClient } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase";
 
 type Proposal = { proposal_id: string; narrative: string; is_latest: boolean };
 
 export default function ProposalCard({ proposal }: { proposal: Proposal }) {
-  const supabase = createClient();
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function submitFeedback(accepted: boolean) {
     setLoading(true);
+    const supabase = createClient();
     const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token ?? "";
-
-    await apiClient.post(`/api/v1/proposals/${proposal.proposal_id}/feedback`, token, { accepted });
+    const token = data.session?.access_token;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    await apiClient.post(
+      `/api/v1/proposals/${proposal.proposal_id}/feedback`,
+      token,
+      { accepted }
+    );
     setSubmitted(true);
     setLoading(false);
   }

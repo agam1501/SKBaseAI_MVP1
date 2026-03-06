@@ -10,6 +10,8 @@ export default function DashboardPage() {
   const supabase = createClient();
   const { selectedClient, loadClients, error } = useClientContext();
   const [email, setEmail] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {

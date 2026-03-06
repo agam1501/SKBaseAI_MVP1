@@ -3,6 +3,8 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
+from sqlalchemy import inspect, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
 from routes import clients, proposals, taxonomies, tickets
@@ -20,14 +22,26 @@ app.add_middleware(
 _bearer = HTTPBearer()
 
 
+def _assert_schema_subset(orm_model, pydantic_schema):
+    orm_cols = {c.key for c in inspect(orm_model).mapper.columns}
+    schema_fields = set(pydantic_schema.model_fields.keys())
+    missing = schema_fields - orm_cols
+    assert not missing, f"{pydantic_schema.__name__} has fields not in ORM: {missing}"
+
+
 @app.on_event("startup")
-async def load_jwks():
-    """Fetch Supabase public keys on startup for ES256 token verification."""
+async def startup():
+    """Fetch Supabase public keys and validate Pydantic/ORM schema alignment."""
     url = f"{settings.supabase_url}/auth/v1/.well-known/jwks.json"
     async with httpx.AsyncClient() as client:
         resp = await client.get(url)
         resp.raise_for_status()
         app.state.jwks = resp.json().get("keys", [])
+
+    _assert_schema_subset(Ticket, TicketRead)
+    _assert_schema_subset(TicketProposal, ProposalRead)
+    _assert_schema_subset(TicketProposalFeedback, FeedbackRead)
+    _assert_schema_subset(TicketTaxonomy, TaxonomyRead)
 
 
 async def get_current_user(
