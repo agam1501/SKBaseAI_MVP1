@@ -24,7 +24,7 @@ export default function ProposalCard({ proposal }: { proposal: Proposal }) {
     await apiClient.post(
       `/api/v1/proposals/${proposal.proposal_id}/feedback`,
       token,
-      { accepted }
+      { accepted },
     );
     setSubmitted(true);
     setLoading(false);

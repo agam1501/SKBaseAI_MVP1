@@ -3,9 +3,16 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 export type ApiOptions = { clientId?: string | null };
 
 export type TicketUploadRowError = { row: number; message: string };
-export type TicketUploadResult = { created: number; errors: TicketUploadRowError[] };
+export type TicketUploadResult = {
+  created: number;
+  errors: TicketUploadRowError[];
+};
 
-function buildHeaders(token: string, options?: ApiOptions, omitContentType = false): HeadersInit {
+function buildHeaders(
+  token: string,
+  options?: ApiOptions,
+  omitContentType = false,
+): HeadersInit {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
   };
@@ -22,7 +29,7 @@ async function apiFetch<T>(
   path: string,
   token: string,
   init?: RequestInit,
-  options?: ApiOptions
+  options?: ApiOptions,
 ): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
@@ -45,7 +52,7 @@ async function apiFetch<T>(
   }
   const contentType = res.headers.get("content-type");
   const text = await res.text();
-  if (!text || (contentType?.includes("application/json") === false)) {
+  if (!text || contentType?.includes("application/json") === false) {
     return undefined as T;
   }
   return JSON.parse(text) as T;
@@ -55,14 +62,19 @@ export const apiClient = {
   get: <T>(path: string, token: string, options?: ApiOptions) =>
     apiFetch<T>(path, token, undefined, options),
   post: <T>(path: string, token: string, body: unknown, options?: ApiOptions) =>
-    apiFetch<T>(path, token, { method: "POST", body: JSON.stringify(body) }, options),
+    apiFetch<T>(
+      path,
+      token,
+      { method: "POST", body: JSON.stringify(body) },
+      options,
+    ),
 
   /** Upload CSV file; returns result for 201 and 422 (invalid rows), throws for other errors. */
   uploadTickets: async (
     path: string,
     token: string,
     file: File,
-    options?: ApiOptions
+    options?: ApiOptions,
   ): Promise<TicketUploadResult> => {
     const formData = new FormData();
     formData.append("file", file);

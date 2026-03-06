@@ -10,8 +10,19 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
-type Ticket = { ticket_id: string; short_desc: string; long_desc?: string | null; full_desc?: string | null; is_resolved: boolean };
-type Proposal = { id: string; proposal_narrative?: string; narrative?: string; is_latest: boolean };
+type Ticket = {
+  ticket_id: string;
+  short_desc: string;
+  long_desc?: string | null;
+  full_desc?: string | null;
+  is_resolved: boolean;
+};
+type Proposal = {
+  id: string;
+  proposal_narrative?: string;
+  narrative?: string;
+  is_latest: boolean;
+};
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -39,7 +50,10 @@ export default function TicketDetailPage() {
       }
 
       try {
-        const p = await apiClient.get<Proposal>(`/api/v1/proposals/tickets/${id}/latest`, token);
+        const p = await apiClient.get<Proposal>(
+          `/api/v1/proposals/tickets/${id}/latest`,
+          token,
+        );
         setProposal(p);
       } catch {
         // no proposal yet — that's fine
@@ -47,13 +61,23 @@ export default function TicketDetailPage() {
     });
   }, [id, supabase, selectedClient, router]);
 
-  if (!selectedClient) return <div className="p-8 text-sm text-muted-foreground">Select a client first.</div>;
-  if (!ticket) return <div className="p-8 text-sm text-muted-foreground">Loading...</div>;
+  if (!selectedClient)
+    return (
+      <div className="p-8 text-sm text-muted-foreground">
+        Select a client first.
+      </div>
+    );
+  if (!ticket)
+    return <div className="p-8 text-sm text-muted-foreground">Loading...</div>;
 
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-2xl mx-auto space-y-6">
-        <Button variant="link" className="text-muted-foreground p-0 h-auto" asChild>
+        <Button
+          variant="link"
+          className="text-muted-foreground p-0 h-auto"
+          asChild
+        >
           <Link href="/tickets">← Back</Link>
         </Button>
 
@@ -63,9 +87,13 @@ export default function TicketDetailPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             {(ticket.full_desc ?? ticket.long_desc) && (
-              <p className="text-sm text-muted-foreground">{ticket.full_desc ?? ticket.long_desc}</p>
+              <p className="text-sm text-muted-foreground">
+                {ticket.full_desc ?? ticket.long_desc}
+              </p>
             )}
-            <span className="text-xs text-muted-foreground">{ticket.is_resolved ? "Resolved" : "Open"}</span>
+            <span className="text-xs text-muted-foreground">
+              {ticket.is_resolved ? "Resolved" : "Open"}
+            </span>
           </CardContent>
         </Card>
 
@@ -75,12 +103,15 @@ export default function TicketDetailPage() {
           <ProposalCard
             proposal={{
               proposal_id: proposal.id,
-              narrative: proposal.proposal_narrative ?? proposal.narrative ?? "",
+              narrative:
+                proposal.proposal_narrative ?? proposal.narrative ?? "",
               is_latest: proposal.is_latest,
             }}
           />
         ) : (
-          <p className="text-sm text-muted-foreground">No proposal generated yet.</p>
+          <p className="text-sm text-muted-foreground">
+            No proposal generated yet.
+          </p>
         )}
       </div>
     </div>

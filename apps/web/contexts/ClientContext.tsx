@@ -27,7 +27,9 @@ const ClientContext = createContext<ClientContextValue | null>(null);
 
 export function ClientProvider({ children }: { children: ReactNode }) {
   const [clients, setClients] = useState<Client[]>([]);
-  const [selectedClient, setSelectedClientState] = useState<Client | null>(null);
+  const [selectedClient, setSelectedClientState] = useState<Client | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +47,15 @@ export function ClientProvider({ children }: { children: ReactNode }) {
     setError(null);
     const timeoutMs = 15000;
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("Request timed out. Check that the API is running and NEXT_PUBLIC_API_URL is set.")), timeoutMs)
+      setTimeout(
+        () =>
+          reject(
+            new Error(
+              "Request timed out. Check that the API is running and NEXT_PUBLIC_API_URL is set.",
+            ),
+          ),
+        timeoutMs,
+      ),
     );
     try {
       const data = await Promise.race([

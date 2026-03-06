@@ -12,8 +12,14 @@ import { cn } from "@/lib/utils";
 export default function SelectClientPage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  const { clients, selectedClient, setSelectedClient, loadClients, loading, error } =
-    useClientContext();
+  const {
+    clients,
+    selectedClient,
+    setSelectedClient,
+    loadClients,
+    loading,
+    error,
+  } = useClientContext();
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -59,13 +65,16 @@ export default function SelectClientPage() {
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left h-auto py-2",
-                      selectedClient?.client_id === c.client_id && "border-primary bg-secondary"
+                      selectedClient?.client_id === c.client_id &&
+                        "border-primary bg-secondary",
                     )}
                     onClick={() => setSelectedClient(c)}
                   >
                     <div className="w-full">
                       <div className="font-medium">{c.name}</div>
-                      <div className="text-xs text-muted-foreground">{c.client_id}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {c.client_id}
+                      </div>
                     </div>
                   </Button>
                 ))}
