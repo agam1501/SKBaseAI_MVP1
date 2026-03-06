@@ -39,8 +39,8 @@ async def get_effective_client_id(
         )
         if result.scalar_one_or_none() is not None:
             return client_id
-        # Fallback when UserClient not populated: allow only the default client
-        if str(client_id) == settings.default_client_id:
+        # No user_clients table or no row: allow default and user_id as client_id
+        if client_id == user_id or str(client_id) == settings.default_client_id:
             return client_id
         raise HTTPException(status_code=403, detail="Access to this client not allowed")
     return user_id

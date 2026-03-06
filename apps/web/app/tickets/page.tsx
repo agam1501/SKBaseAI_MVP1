@@ -5,7 +5,6 @@ import { apiClient } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 type Ticket = {
   ticket_id: string;
@@ -17,7 +16,7 @@ type Ticket = {
 export default function TicketsPage() {
   const router = useRouter();
   const supabase = createClient();
-  const { selectedClient, loadClients, loading: clientsLoading, error: clientsError } =
+  const { clients, selectedClient, setSelectedClient, loadClients, loading: clientsLoading, error: clientsError } =
     useClientContext();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +28,7 @@ export default function TicketsPage() {
       if (!token) return;
       await loadClients(token);
     });
-  }, [loadClients, router, supabase]);
+  }, [loadClients]);
 
   useEffect(() => {
     if (!selectedClient) return;
@@ -46,38 +45,42 @@ export default function TicketsPage() {
         setError(e instanceof Error ? e.message : "Failed to load tickets");
       }
     });
-  }, [selectedClient, supabase]);
-
-  if (!clientsLoading && !selectedClient) {
-    return (
-      <div className="min-h-screen p-8">
-        <div className="max-w-4xl mx-auto space-y-4">
-          <h1 className="text-2xl font-bold">Tickets</h1>
-          <p className="text-gray-500">
-            Select a client first to view their tickets.{" "}
-            <Link href="/dashboard" className="underline text-black">
-              Go to client selection
-            </Link>
-          </p>
-        </div>
-      </div>
-    );
-  }
+  }, [selectedClient]);
 
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-4xl mx-auto space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <h1 className="text-2xl font-bold">
-            Tickets{selectedClient ? ` — ${selectedClient.name}` : ""}
-          </h1>
-          <Link href="/dashboard" className="text-sm underline text-gray-600">
-            Change client
-          </Link>
+          <h1 className="text-2xl font-bold">Tickets</h1>
+          {clientsLoading ? (
+            <span className="text-sm text-gray-500">Loading clients…</span>
+          ) : (
+            <label className="text-sm text-gray-600 font-medium">
+              Client:
+              <select
+                className="ml-2 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm"
+                value={selectedClient?.client_id ?? ""}
+                onChange={(e) => {
+                  const c = clients.find((c) => c.client_id === e.target.value);
+                  setSelectedClient(c ?? null);
+                }}
+              >
+                {clients.map((c) => (
+                  <option key={c.client_id} value={c.client_id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
 
         {(clientsError || error) && (
           <p className="text-red-600 text-sm">{clientsError ?? error}</p>
+        )}
+
+        {!selectedClient && !clientsLoading && (
+          <p className="text-gray-500 text-sm">Select a client to view tickets.</p>
         )}
 
         {selectedClient && tickets.length === 0 && !error && (

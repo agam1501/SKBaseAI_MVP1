@@ -29,7 +29,14 @@ async function apiFetch<T>(
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`API ${res.status}: ${text}`);
+    let message = `API ${res.status}: ${text}`;
+    try {
+      const json = JSON.parse(text) as { detail?: string };
+      if (typeof json.detail === "string") message = json.detail;
+    } catch {
+      /* use default message */
+    }
+    throw new Error(message);
   }
   const contentType = res.headers.get("content-type");
   const text = await res.text();

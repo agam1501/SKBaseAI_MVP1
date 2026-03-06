@@ -3,11 +3,9 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from sqlalchemy import inspect, text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import inspect
 
 from config import settings
-from db import get_db
 from models import Ticket, TicketProposal, TicketProposalFeedback, TicketTaxonomy
 from routes import clients, proposals, taxonomies, tickets
 from schemas import FeedbackRead, ProposalRead, TaxonomyRead, TicketRead
@@ -85,12 +83,6 @@ async def get_current_user(
 @app.get("/health", tags=["meta"])
 async def health():
     return {"status": "ok"}
-
-
-@app.get("/health/db", tags=["meta"])
-async def health_db(db: AsyncSession = Depends(get_db)):
-    await db.execute(text("SELECT 1"))
-    return {"status": "ok", "db": "connected"}
 
 
 app.include_router(clients.router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
