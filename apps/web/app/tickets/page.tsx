@@ -14,13 +14,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 
 const EMPTY_CLIENT_VALUE = "__none__";
 
 type Ticket = {
   ticket_id: string;
+  external_id: string | null;
   short_desc: string;
+  status: string | null;
+  priority: string | null;
   is_resolved: boolean;
   created_at: string;
 };
@@ -186,19 +188,67 @@ export default function TicketsPage() {
           <p className="text-muted-foreground text-sm">No tickets yet.</p>
         )}
 
-        {selectedClient &&
-          tickets.map((t) => (
-            <Link key={t.ticket_id} href={`/tickets/${t.ticket_id}`}>
-              <Card className="transition-shadow hover:shadow-md cursor-pointer">
-                <CardContent className="p-4">
-                  <p className="font-medium">{t.short_desc}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {t.is_resolved ? "Resolved" : "Open"} · {new Date(t.created_at).toLocaleDateString()}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+        {selectedClient && tickets.length > 0 && (
+          <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      External ID
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Summary
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Priority
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Created
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {tickets.map((t) => (
+                    <tr key={t.ticket_id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                        {t.external_id ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <Link
+                          href={`/tickets/${t.ticket_id}`}
+                          className="font-medium text-gray-900 hover:text-gray-700 hover:underline"
+                        >
+                          {t.short_desc}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-sm whitespace-nowrap">
+                        <span
+                          className={
+                            t.is_resolved
+                              ? "text-gray-500"
+                              : "text-amber-600 font-medium"
+                          }
+                        >
+                          {t.status ?? (t.is_resolved ? "CLOSED" : "OPEN")}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                        {t.priority ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                        {new Date(t.created_at).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
