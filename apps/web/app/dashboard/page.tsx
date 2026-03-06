@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 const EMPTY_CLIENT_VALUE = "__none__";
@@ -103,15 +104,18 @@ export default function DashboardPage() {
             </Button>
           </div>
         </div>
-        <div>
+        <div className="space-y-2">
+          <Label htmlFor="dashboard-client-select" className="text-sm font-medium text-muted-foreground">
+            Client
+          </Label>
           {loading ? (
-            <span className="text-sm text-muted-foreground">Loading clients…</span>
+            <span className="text-sm text-muted-foreground block">Loading clients…</span>
           ) : (
             <Select
               value={selectedClient?.client_id ?? EMPTY_CLIENT_VALUE}
               onValueChange={handleClientChange}
             >
-              <SelectTrigger className="min-w-[200px]">
+              <SelectTrigger id="dashboard-client-select" className="min-w-[160px] w-[160px]">
                 <SelectValue placeholder="Select client…" />
               </SelectTrigger>
               <SelectContent>
