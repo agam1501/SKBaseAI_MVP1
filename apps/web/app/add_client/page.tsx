@@ -14,14 +14,23 @@ import { cn } from "@/lib/utils";
 export default function AddClientPage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  const { clients, selectedClient, setSelectedClient, loadClients, loading, error } =
-    useClientContext();
+  const {
+    clients,
+    selectedClient,
+    setSelectedClient,
+    loadClients,
+    loading,
+    error,
+  } = useClientContext();
 
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const canSubmit = useMemo(() => name.trim().length >= 2 && !submitting, [name, submitting]);
+  const canSubmit = useMemo(
+    () => name.trim().length >= 2 && !submitting,
+    [name, submitting],
+  );
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -44,7 +53,7 @@ export default function AddClientPage() {
       const created = await apiClient.post<{ client_id: string; name: string }>(
         "/api/v1/clients",
         token,
-        { name: name.trim() }
+        { name: name.trim() },
       );
 
       await loadClients(token);
@@ -70,7 +79,11 @@ export default function AddClientPage() {
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Add client</h1>
-          <Button variant="link" className="text-muted-foreground p-0 h-auto" asChild>
+          <Button
+            variant="link"
+            className="text-muted-foreground p-0 h-auto"
+            asChild
+          >
             <Link href="/dashboard">← Back</Link>
           </Button>
         </div>
@@ -121,13 +134,16 @@ export default function AddClientPage() {
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left h-auto py-2",
-                      selectedClient?.client_id === c.client_id && "border-primary bg-secondary"
+                      selectedClient?.client_id === c.client_id &&
+                        "border-primary bg-secondary",
                     )}
                     onClick={() => setSelectedClient(c)}
                   >
                     <div className="w-full">
                       <div className="font-medium">{c.name}</div>
-                      <div className="text-xs text-muted-foreground">{c.client_id}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {c.client_id}
+                      </div>
                     </div>
                   </Button>
                 ))}

@@ -1,7 +1,3 @@
-#!/usr/bin/env sh
-# Optional: load husky env (created by npx husky init)
-[ -f "$(dirname -- "$0")/_/husky.sh" ] && . "$(dirname -- "$0")/_/husky.sh"
-
 # Run ruff format (Python) in apps/api (activate .venv if present)
 echo "Running ruff format..."
 ROOT="$(cd "$(dirname -- "$0")/.." && pwd)"

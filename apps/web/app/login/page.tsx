@@ -22,7 +22,10 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     if (error) {
       setError(error.message);
     } else {
@@ -52,9 +55,7 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold">SKBaseAI</h1>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           <form className="space-y-4">
             <div className="space-y-2">

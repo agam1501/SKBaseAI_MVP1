@@ -19,7 +19,10 @@ export default function AddClientPage() {
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const canSubmit = useMemo(() => name.trim().length >= 2 && !submitting, [name, submitting]);
+  const canSubmit = useMemo(
+    () => name.trim().length >= 2 && !submitting,
+    [name, submitting],
+  );
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -41,7 +44,7 @@ export default function AddClientPage() {
       const created = await apiClient.post<{ client_id: string; name: string }>(
         "/api/v1/clients",
         token,
-        { name: name.trim() }
+        { name: name.trim() },
       );
 
       await loadClients(token);
@@ -60,7 +63,11 @@ export default function AddClientPage() {
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Add client</h1>
-          <Button variant="link" className="text-muted-foreground p-0 h-auto" asChild>
+          <Button
+            variant="link"
+            className="text-muted-foreground p-0 h-auto"
+            asChild
+          >
             <Link href="/clients">← Back to Select client</Link>
           </Button>
         </div>

@@ -32,8 +32,14 @@ type Ticket = {
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  const { clients, selectedClient, setSelectedClient, loadClients, loading, error } =
-    useClientContext();
+  const {
+    clients,
+    selectedClient,
+    setSelectedClient,
+    loadClients,
+    loading,
+    error,
+  } = useClientContext();
   const [email, setEmail] = useState<string | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketsError, setTicketsError] = useState<string | null>(null);
@@ -100,7 +106,11 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold">Home</h1>
           <div className="flex items-center gap-4 flex-wrap">
             <span className="text-sm text-muted-foreground">{email}</span>
-            <Button variant="link" onClick={signOut} className="text-sm p-0 h-auto">
+            <Button
+              variant="link"
+              onClick={signOut}
+              className="text-sm p-0 h-auto"
+            >
               Sign out
             </Button>
           </div>
