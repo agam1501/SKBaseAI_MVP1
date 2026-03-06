@@ -3,9 +3,16 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 export type ApiOptions = { clientId?: string | null };
 
 export type TicketUploadRowError = { row: number; message: string };
-export type TicketUploadResult = { created: number; errors: TicketUploadRowError[] };
+export type TicketUploadResult = {
+  created: number;
+  errors: TicketUploadRowError[];
+};
 
-function buildHeaders(token: string, options?: ApiOptions, omitContentType = false): HeadersInit {
+function buildHeaders(
+  token: string,
+  options?: ApiOptions,
+  omitContentType = false,
+): HeadersInit {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
   };
@@ -67,7 +74,7 @@ export const apiClient = {
     path: string,
     token: string,
     file: File,
-    options?: ApiOptions
+    options?: ApiOptions,
   ): Promise<TicketUploadResult> => {
     const formData = new FormData();
     formData.append("file", file);

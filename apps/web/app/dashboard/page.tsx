@@ -74,7 +74,9 @@ export default function DashboardPage() {
       });
       setTickets(data_);
     } catch (e: unknown) {
-      setTicketsError(e instanceof Error ? e.message : "Failed to load tickets");
+      setTicketsError(
+        e instanceof Error ? e.message : "Failed to load tickets",
+      );
       setTickets([]);
     } finally {
       setTicketsLoading(false);
@@ -116,21 +118,31 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="dashboard-client-select" className="text-sm font-medium text-muted-foreground">
+          <Label
+            htmlFor="dashboard-client-select"
+            className="text-sm font-medium text-muted-foreground"
+          >
             Client
           </Label>
           {loading ? (
-            <span className="text-sm text-muted-foreground block">Loading clients…</span>
+            <span className="text-sm text-muted-foreground block">
+              Loading clients…
+            </span>
           ) : (
             <Select
               value={selectedClient?.client_id ?? EMPTY_CLIENT_VALUE}
               onValueChange={handleClientChange}
             >
-              <SelectTrigger id="dashboard-client-select" className="min-w-[160px] w-[160px]">
+              <SelectTrigger
+                id="dashboard-client-select"
+                className="min-w-[160px] w-[160px]"
+              >
                 <SelectValue placeholder="Select client…" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={EMPTY_CLIENT_VALUE}>Select client…</SelectItem>
+                <SelectItem value={EMPTY_CLIENT_VALUE}>
+                  Select client…
+                </SelectItem>
                 {clients.map((c) => (
                   <SelectItem key={c.client_id} value={c.client_id}>
                     {c.name}
@@ -146,7 +158,9 @@ export default function DashboardPage() {
         {selectedClient ? (
           <div className="mt-10 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Tickets for {selectedClient.name}</h2>
+              <h2 className="text-lg font-semibold">
+                Tickets for {selectedClient.name}
+              </h2>
               <Button asChild>
                 <Link href="/upload_tickets">Upload</Link>
               </Button>
@@ -168,16 +182,28 @@ export default function DashboardPage() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        <th
+                          scope="col"
+                          className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                        >
                           External ID
                         </th>
-                        <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        <th
+                          scope="col"
+                          className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                        >
                           Summary
                         </th>
-                        <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        <th
+                          scope="col"
+                          className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                        >
                           Status
                         </th>
-                        <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        <th
+                          scope="col"
+                          className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                        >
                           Created
                         </th>
                       </tr>
@@ -197,7 +223,13 @@ export default function DashboardPage() {
                             </Link>
                           </td>
                           <td className="px-4 py-3 text-sm whitespace-nowrap">
-                            <span className={t.is_resolved ? "text-gray-500" : "text-amber-600 font-medium"}>
+                            <span
+                              className={
+                                t.is_resolved
+                                  ? "text-gray-500"
+                                  : "text-amber-600 font-medium"
+                              }
+                            >
                               {t.status ?? (t.is_resolved ? "CLOSED" : "OPEN")}
                             </span>
                           </td>

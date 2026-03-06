@@ -12,11 +12,17 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 export default function UploadTicketsPage() {
   const router = useRouter();
   const supabase = createClient();
-  const { selectedClient, loadClients, error: clientsError } = useClientContext();
+  const {
+    selectedClient,
+    loadClients,
+    error: clientsError,
+  } = useClientContext();
   const [error, setError] = useState<string | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState<TicketUploadResult | null>(null);
+  const [uploadResult, setUploadResult] = useState<TicketUploadResult | null>(
+    null,
+  );
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -44,7 +50,7 @@ export default function UploadTicketsPage() {
         "/api/v1/tickets/upload",
         token,
         uploadFile,
-        { clientId: selectedClient.client_id }
+        { clientId: selectedClient.client_id },
       );
       setUploadResult(result);
     } catch (e: unknown) {
@@ -73,14 +79,18 @@ export default function UploadTicketsPage() {
         )}
 
         {!selectedClient && (
-          <p className="text-muted-foreground text-sm">Select a client on the dashboard to upload tickets.</p>
+          <p className="text-muted-foreground text-sm">
+            Select a client on the dashboard to upload tickets.
+          </p>
         )}
 
         {selectedClient && (
           <div className="flex flex-col items-center justify-center py-12">
             <Card className="w-full max-w-sm">
               <CardHeader className="text-center pb-2">
-                <h2 className="text-sm font-semibold leading-none tracking-tight">Upload tickets (CSV)</h2>
+                <h2 className="text-sm font-semibold leading-none tracking-tight">
+                  Upload tickets (CSV)
+                </h2>
               </CardHeader>
               <CardContent className="flex flex-col items-center gap-4">
                 <label className="flex flex-col items-center gap-2 w-full cursor-pointer">
@@ -96,7 +106,12 @@ export default function UploadTicketsPage() {
                       setUploadResult(null);
                     }}
                   />
-                  <Button type="button" variant="outline" asChild className="w-full max-w-[200px]">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    asChild
+                    className="w-full max-w-[200px]"
+                  >
                     <span>Choose file</span>
                   </Button>
                 </label>
@@ -112,12 +127,15 @@ export default function UploadTicketsPage() {
                   <div className="text-sm space-y-1 text-center w-full">
                     {uploadResult.created > 0 && (
                       <p className="text-green-700 font-medium">
-                        Created {uploadResult.created} ticket{uploadResult.created !== 1 ? "s" : ""}.
+                        Created {uploadResult.created} ticket
+                        {uploadResult.created !== 1 ? "s" : ""}.
                       </p>
                     )}
                     {uploadResult.errors.length > 0 && (
                       <div className="text-left">
-                        <p className="text-amber-700 font-medium">Row errors:</p>
+                        <p className="text-amber-700 font-medium">
+                          Row errors:
+                        </p>
                         <ul className="list-disc list-inside text-amber-800 mt-0.5">
                           {uploadResult.errors.map((err, i) => (
                             <li key={i}>
