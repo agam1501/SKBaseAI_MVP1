@@ -63,6 +63,16 @@ class TicketRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class TicketUploadRowError(BaseModel):
+    row: int
+    message: str
+
+
+class TicketUploadResult(BaseModel):
+    created: int
+    errors: list[TicketUploadRowError]
+
+
 # --- Proposals ---
 
 
