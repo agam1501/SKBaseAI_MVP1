@@ -117,7 +117,9 @@ async def upload_tickets_csv(
     try:
         text = content.decode("utf-8", errors="replace")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"File could not be decoded as UTF-8: {e}") from e
+        raise HTTPException(
+            status_code=400, detail=f"File could not be decoded as UTF-8: {e}"
+        ) from e
     reader = csv.DictReader(io.StringIO(text))
     if reader.fieldnames is None:
         raise HTTPException(status_code=400, detail="CSV has no header row")
