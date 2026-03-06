@@ -32,3 +32,8 @@ ignore = ["E501"]           # line length handled by formatter
 
 [tool.ruff.format]
 quote-style = "double"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.5",
+]
