@@ -16,6 +16,8 @@ echo "Running npm format..."
 # Fail if formatters changed any files (so they get committed before push)
 if ! git diff --quiet; then
   echo ""
-  echo "⚠️  Formatters changed some files. Please commit the changes and push again."
+  echo "⚠️  Formatters changed the following files. Please commit the changes and push again."
+  echo ""
+  git diff --name-only
   exit 1
 fi
