@@ -1,9 +1,9 @@
 "use client";
 
 import { useClientContext } from "@/contexts/ClientContext";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, type TicketUploadResult } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -32,6 +32,9 @@ export default function TicketsPage() {
     useClientContext();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<TicketUploadResult | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -42,22 +45,21 @@ export default function TicketsPage() {
     });
   }, [supabase, loadClients, router]);
 
-  useEffect(() => {
+  const loadTickets = useCallback(async () => {
     if (!selectedClient) return;
-    supabase.auth.getSession().then(async ({ data }) => {
-      const token = data.session?.access_token;
-      if (!token) return;
-      setError(null);
-      try {
-        const data = await apiClient.get<Ticket[]>("/api/v1/tickets", token, {
-          clientId: selectedClient.client_id,
-        });
-        setTickets(data);
-      } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : "Failed to load tickets");
-      }
-    });
-  }, [supabase, selectedClient]);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) return;
+    setError(null);
+    try {
+      const data = await apiClient.get<Ticket[]>("/api/v1/tickets", token, {
+        clientId: selectedClient.client_id,
+      });
+      setTickets(data);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to load tickets");
+    }
+  }, [selectedClient]);
 
   function handleClientChange(value: string) {
     if (value === EMPTY_CLIENT_VALUE) {
@@ -67,6 +69,34 @@ export default function TicketsPage() {
       setSelectedClient(client);
     }
   }
+
+  useEffect(() => {
+    loadTickets();
+  }, [loadTickets]);
+
+  const handleUpload = async () => {
+    if (!selectedClient || !uploadFile) return;
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return;
+    setUploading(true);
+    setUploadResult(null);
+    setError(null);
+    try {
+      const result = await apiClient.uploadTickets(
+        "/api/v1/tickets/upload",
+        token,
+        uploadFile,
+        { clientId: selectedClient.client_id }
+      );
+      setUploadResult(result);
+      if (result.created > 0) await loadTickets();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen p-8">
@@ -100,6 +130,52 @@ export default function TicketsPage() {
 
         {(clientsError || error) && (
           <p className="text-destructive text-sm">{clientsError ?? error}</p>
+        )}
+
+        {selectedClient && (
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+            <h2 className="text-sm font-semibold text-gray-700">Upload tickets (CSV)</h2>
+            <div className="flex flex-wrap items-center gap-3">
+              <input
+                type="file"
+                accept=".csv"
+                className="text-sm file:mr-3 file:rounded-md file:border-0 file:bg-gray-200 file:px-3 file:py-1.5 file:text-sm"
+                onChange={(e) => {
+                  setUploadFile(e.target.files?.[0] ?? null);
+                  setUploadResult(null);
+                }}
+              />
+              <button
+                type="button"
+                disabled={!uploadFile || uploading}
+                onClick={handleUpload}
+                className="rounded-md bg-gray-800 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700"
+              >
+                {uploading ? "Uploading…" : "Upload"}
+              </button>
+            </div>
+            {uploadResult && (
+              <div className="text-sm space-y-1">
+                {uploadResult.created > 0 && (
+                  <p className="text-green-700 font-medium">
+                    Created {uploadResult.created} ticket{uploadResult.created !== 1 ? "s" : ""}.
+                  </p>
+                )}
+                {uploadResult.errors.length > 0 && (
+                  <div>
+                    <p className="text-amber-700 font-medium">Row errors:</p>
+                    <ul className="list-disc list-inside text-amber-800 mt-0.5">
+                      {uploadResult.errors.map((err, i) => (
+                        <li key={i}>
+                          Row {err.row}: {err.message}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {!selectedClient && !clientsLoading && (
