@@ -3,8 +3,20 @@
 import { useClientContext } from "@/contexts/ClientContext";
 import { apiClient } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+
+const EMPTY_CLIENT_VALUE = "__none__";
 
 type Ticket = {
   ticket_id: string;
@@ -15,7 +27,7 @@ type Ticket = {
 
 export default function TicketsPage() {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { clients, selectedClient, setSelectedClient, loadClients, loading: clientsLoading, error: clientsError } =
     useClientContext();
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -28,7 +40,7 @@ export default function TicketsPage() {
       if (!token) return;
       await loadClients(token);
     });
-  }, [loadClients]);
+  }, [supabase, loadClients, router]);
 
   useEffect(() => {
     if (!selectedClient) return;
@@ -45,7 +57,16 @@ export default function TicketsPage() {
         setError(e instanceof Error ? e.message : "Failed to load tickets");
       }
     });
-  }, [selectedClient]);
+  }, [supabase, selectedClient]);
+
+  function handleClientChange(value: string) {
+    if (value === EMPTY_CLIENT_VALUE) {
+      setSelectedClient(null);
+    } else {
+      const client = clients.find((c) => c.client_id === value) ?? null;
+      setSelectedClient(client);
+    }
+  }
 
   return (
     <div className="min-h-screen p-8">
@@ -53,52 +74,54 @@ export default function TicketsPage() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="text-2xl font-bold">Tickets</h1>
           {clientsLoading ? (
-            <span className="text-sm text-gray-500">Loading clients…</span>
+            <span className="text-sm text-muted-foreground">Loading clients…</span>
           ) : (
-            <label className="text-sm text-gray-600 font-medium">
-              Client:
-              <select
-                className="ml-2 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm"
-                value={selectedClient?.client_id ?? ""}
-                onChange={(e) => {
-                  const c = clients.find((c) => c.client_id === e.target.value);
-                  setSelectedClient(c ?? null);
-                }}
+            <div className="flex items-center gap-2">
+              <Label htmlFor="client-select">Client:</Label>
+              <Select
+                value={selectedClient?.client_id ?? EMPTY_CLIENT_VALUE}
+                onValueChange={handleClientChange}
               >
-                {clients.map((c) => (
-                  <option key={c.client_id} value={c.client_id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <SelectTrigger id="client-select" className="w-[200px]">
+                  <SelectValue placeholder="Select client…" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={EMPTY_CLIENT_VALUE}>Select client…</SelectItem>
+                  {clients.map((c) => (
+                    <SelectItem key={c.client_id} value={c.client_id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
         </div>
 
         {(clientsError || error) && (
-          <p className="text-red-600 text-sm">{clientsError ?? error}</p>
+          <p className="text-destructive text-sm">{clientsError ?? error}</p>
         )}
 
         {!selectedClient && !clientsLoading && (
-          <p className="text-gray-500 text-sm">Select a client to view tickets.</p>
+          <p className="text-muted-foreground text-sm">Select a client to view tickets.</p>
         )}
 
         {selectedClient && tickets.length === 0 && !error && (
-          <p className="text-gray-500 text-sm">No tickets yet.</p>
+          <p className="text-muted-foreground text-sm">No tickets yet.</p>
         )}
 
         {selectedClient &&
           tickets.map((t) => (
-            <a
-              key={t.ticket_id}
-              href={`/tickets/${t.ticket_id}`}
-              className="block p-4 bg-white rounded-xl shadow hover:shadow-md transition"
-            >
-              <p className="font-medium">{t.short_desc}</p>
-              <p className="text-xs text-gray-400 mt-1">
-                {t.is_resolved ? "Resolved" : "Open"} · {new Date(t.created_at).toLocaleDateString()}
-              </p>
-            </a>
+            <Link key={t.ticket_id} href={`/tickets/${t.ticket_id}`}>
+              <Card className="transition-shadow hover:shadow-md cursor-pointer">
+                <CardContent className="p-4">
+                  <p className="font-medium">{t.short_desc}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t.is_resolved ? "Resolved" : "Open"} · {new Date(t.created_at).toLocaleDateString()}
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
       </div>
     </div>

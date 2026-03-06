@@ -4,8 +4,11 @@ import ProposalCard from "@/components/ProposalCard";
 import { useClientContext } from "@/contexts/ClientContext";
 import { apiClient } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 type Ticket = { ticket_id: string; short_desc: string; long_desc?: string | null; full_desc?: string | null; is_resolved: boolean };
 type Proposal = { id: string; proposal_narrative?: string; narrative?: string; is_latest: boolean };
@@ -13,7 +16,7 @@ type Proposal = { id: string; proposal_narrative?: string; narrative?: string; i
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { selectedClient } = useClientContext();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
@@ -42,25 +45,31 @@ export default function TicketDetailPage() {
         // no proposal yet — that's fine
       }
     });
-  }, [id, selectedClient]);
+  }, [id, supabase, selectedClient, router]);
 
-  if (!selectedClient) return <div className="p-8 text-sm text-gray-400">Select a client first.</div>;
-  if (!ticket) return <div className="p-8 text-sm text-gray-400">Loading...</div>;
+  if (!selectedClient) return <div className="p-8 text-sm text-muted-foreground">Select a client first.</div>;
+  if (!ticket) return <div className="p-8 text-sm text-muted-foreground">Loading...</div>;
 
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-2xl mx-auto space-y-6">
-        <a href="/tickets" className="text-sm underline text-gray-500">← Back</a>
+        <Button variant="link" className="text-muted-foreground p-0 h-auto" asChild>
+          <Link href="/tickets">← Back</Link>
+        </Button>
 
-        <div className="bg-white rounded-xl shadow p-6 space-y-2">
-          <h1 className="text-xl font-bold">{ticket.short_desc}</h1>
-          {(ticket.full_desc ?? ticket.long_desc) && (
-            <p className="text-sm text-gray-600">{ticket.full_desc ?? ticket.long_desc}</p>
-          )}
-          <span className="text-xs text-gray-400">{ticket.is_resolved ? "Resolved" : "Open"}</span>
-        </div>
+        <Card>
+          <CardHeader>
+            <h1 className="text-xl font-bold">{ticket.short_desc}</h1>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {(ticket.full_desc ?? ticket.long_desc) && (
+              <p className="text-sm text-muted-foreground">{ticket.full_desc ?? ticket.long_desc}</p>
+            )}
+            <span className="text-xs text-muted-foreground">{ticket.is_resolved ? "Resolved" : "Open"}</span>
+          </CardContent>
+        </Card>
 
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+        {error && <p className="text-destructive text-sm">{error}</p>}
 
         {proposal ? (
           <ProposalCard
@@ -71,7 +80,7 @@ export default function TicketDetailPage() {
             }}
           />
         ) : (
-          <p className="text-sm text-gray-400">No proposal generated yet.</p>
+          <p className="text-sm text-muted-foreground">No proposal generated yet.</p>
         )}
       </div>
     </div>

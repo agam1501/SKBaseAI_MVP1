@@ -5,10 +5,14 @@ import { apiClient } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function AddClientPage() {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { setSelectedClient, loadClients, error } = useClientContext();
 
   const [name, setName] = useState("");
@@ -24,7 +28,7 @@ export default function AddClientPage() {
         return;
       }
     });
-  }, [router]);
+  }, [supabase, router]);
 
   async function createNewClient() {
     setSubmitting(true);
@@ -56,36 +60,36 @@ export default function AddClientPage() {
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Add client</h1>
-          <a href="/clients" className="text-sm underline text-gray-500">
-            ← Back to Select client
-          </a>
+          <Button variant="link" className="text-muted-foreground p-0 h-auto" asChild>
+            <Link href="/clients">← Back to Select client</Link>
+          </Button>
         </div>
 
         {(error || localError) && (
-          <p className="text-red-600 text-sm">{error ?? localError}</p>
+          <p className="text-destructive text-sm">{error ?? localError}</p>
         )}
 
-        <div className="bg-white rounded-xl shadow p-6 space-y-3">
-          <h2 className="font-semibold">Add a client</h2>
-          <div className="flex gap-2 flex-wrap">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Client name"
-              className="flex-1 min-w-[220px] rounded border border-gray-300 bg-white px-3 py-2 text-sm"
-            />
-            <button
-              onClick={createNewClient}
-              disabled={!canSubmit}
-              className="px-4 py-2 bg-black text-white text-sm rounded disabled:opacity-50"
-            >
-              {submitting ? "Creating…" : "Create"}
-            </button>
-          </div>
-          <p className="text-xs text-gray-500">
-            Creating a client automatically grants you access.
-          </p>
-        </div>
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold">Add a client</h2>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex gap-2 flex-wrap">
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Client name"
+                className="flex-1 min-w-[220px]"
+              />
+              <Button onClick={createNewClient} disabled={!canSubmit}>
+                {submitting ? "Creating…" : "Create"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Creating a client automatically grants you access.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
