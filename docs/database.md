@@ -46,6 +46,23 @@ INSERT INTO clients (client_id, name) VALUES ('00000000-0000-0000-0000-000000000
 ON CONFLICT (client_id) DO NOTHING;
 ```
 
+### user_roles
+Global role per user (Admin, Responder, Developer). A user has exactly one role regardless of which client they access.
+
+| Column | Type | Notes |
+|---|---|---|
+| user_id | uuid PK | Supabase auth user id |
+| role | user_role_enum | `Admin`, `Responder`, or `Developer` |
+
+```sql
+CREATE TYPE user_role_enum AS ENUM ('Admin', 'Responder', 'Developer');
+
+CREATE TABLE IF NOT EXISTS user_roles (
+    user_id uuid PRIMARY KEY,
+    role    user_role_enum NOT NULL
+);
+```
+
 ### tickets
 Core ticket data ingested from source systems.
 

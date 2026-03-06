@@ -1,9 +1,23 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-from models import TicketStatus
+from models import TicketStatus, UserRole
+
+# --- User Roles ---
+
+
+class UserRoleRead(BaseModel):
+    user_id: uuid.UUID
+    role: UserRole
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserRoleCreate(BaseModel):
+    user_id: uuid.UUID
+    role: UserRole
+
 
 # --- Clients ---
 
