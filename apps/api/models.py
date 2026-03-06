@@ -68,8 +68,6 @@ class Ticket(Base):
     root_cause: Mapped[str | None] = mapped_column(Text)
     status: Mapped[TicketStatus | None] = mapped_column(Enum(TicketStatus))
     priority: Mapped[str | None] = mapped_column(String(50))
-    assignment_group: Mapped[str | None] = mapped_column(String(255))
-    cmdb_ci: Mapped[str | None] = mapped_column(String(255))
     is_resolved: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
