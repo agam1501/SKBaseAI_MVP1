@@ -2,7 +2,7 @@
 
 import { useClientContext } from "@/contexts/ClientContext";
 import { createClient } from "@/lib/supabase";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {

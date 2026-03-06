@@ -43,16 +43,24 @@ export function ClientProvider({ children }: { children: ReactNode }) {
   const loadClients = useCallback(async (token: string) => {
     setLoading(true);
     setError(null);
+    const timeoutMs = 15000;
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Request timed out. Check that the API is running and NEXT_PUBLIC_API_URL is set.")), timeoutMs)
+    );
     try {
-      const data = await apiClient.get<Client[]>("/api/v1/clients", token);
-      setClients(data);
+      const data = await Promise.race([
+        apiClient.get<Client[]>("/api/v1/clients", token),
+        timeoutPromise,
+      ]);
+      setClients(data ?? []);
       const storedId = localStorage.getItem(STORAGE_KEY);
-      const matched = data.find((c) => c.client_id === storedId);
+      const matched = (data ?? []).find((c) => c.client_id === storedId);
       if (matched) {
         setSelectedClientState(matched);
-      } else if (data.length > 0) {
-        setSelectedClientState(data[0]);
-        localStorage.setItem(STORAGE_KEY, data[0].client_id);
+      } else if ((data ?? []).length > 0) {
+        const first = (data ?? [])[0];
+        setSelectedClientState(first);
+        localStorage.setItem(STORAGE_KEY, first.client_id);
       } else {
         setSelectedClientState(null);
       }

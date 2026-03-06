@@ -7,7 +7,9 @@ from sqlalchemy import inspect, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
+from models import Ticket, TicketProposal, TicketProposalFeedback, TicketTaxonomy
 from routes import clients, proposals, taxonomies, tickets
+from schemas import FeedbackRead, ProposalRead, TaxonomyRead, TicketRead
 
 app = FastAPI(title="SKBaseAI API", version="0.1.0")
 
