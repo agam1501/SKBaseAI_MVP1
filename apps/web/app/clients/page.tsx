@@ -1,22 +1,15 @@
 "use client";
 
 import { useClientContext } from "@/contexts/ClientContext";
-import { apiClient } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export default function ClientsPage() {
+export default function SelectClientPage() {
   const router = useRouter();
   const supabase = createClient();
   const { clients, selectedClient, setSelectedClient, loadClients, loading, error } =
     useClientContext();
-
-  const [name, setName] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
-
-  const canSubmit = useMemo(() => name.trim().length >= 2 && !submitting, [name, submitting]);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -26,67 +19,14 @@ export default function ClientsPage() {
       }
       await loadClients(data.session.access_token);
     });
-  }, [loadClients]);
-
-  async function createNewClient() {
-    setSubmitting(true);
-    setLocalError(null);
-    try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) return router.push("/login");
-
-      const created = await apiClient.post<{ client_id: string; name: string }>(
-        "/api/v1/clients",
-        token,
-        { name: name.trim() }
-      );
-
-      await loadClients(token);
-      setSelectedClient(created);
-      setName("");
-    } catch (e: unknown) {
-      setLocalError(e instanceof Error ? e.message : "Failed to create client");
-    } finally {
-      setSubmitting(false);
-    }
-  }
+  }, [loadClients, router]);
 
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-3xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Clients</h1>
-          <a href="/dashboard" className="text-sm underline text-gray-500">
-            ← Back
-          </a>
-        </div>
+        <h1 className="text-2xl font-bold">Select client</h1>
 
-        {(error || localError) && (
-          <p className="text-red-600 text-sm">{error ?? localError}</p>
-        )}
-
-        <div className="bg-white rounded-xl shadow p-6 space-y-3">
-          <h2 className="font-semibold">Add a client</h2>
-          <div className="flex gap-2 flex-wrap">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Client name"
-              className="flex-1 min-w-[220px] rounded border border-gray-300 bg-white px-3 py-2 text-sm"
-            />
-            <button
-              onClick={createNewClient}
-              disabled={!canSubmit}
-              className="px-4 py-2 bg-black text-white text-sm rounded disabled:opacity-50"
-            >
-              {submitting ? "Creating…" : "Create"}
-            </button>
-          </div>
-          <p className="text-xs text-gray-500">
-            Creating a client automatically grants you access.
-          </p>
-        </div>
+        {error && <p className="text-red-600 text-sm">{error}</p>}
 
         <div className="bg-white rounded-xl shadow p-6 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -127,8 +67,24 @@ export default function ClientsPage() {
             </div>
           )}
         </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <a
+            href="/clients/add"
+            className="inline-flex items-center px-4 py-2.5 border border-gray-300 bg-white text-sm font-medium rounded hover:bg-gray-50"
+          >
+            Add client
+          </a>
+          {selectedClient && (
+            <a
+              href="/dashboard"
+              className="inline-flex items-center px-4 py-2.5 bg-black text-white text-sm font-medium rounded hover:opacity-90"
+            >
+              Go to Dashboard
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );
 }
-
