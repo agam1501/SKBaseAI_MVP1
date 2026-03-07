@@ -103,7 +103,7 @@ class FeedbackRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# --- Taxonomies ---
+# --- Taxonomies (ticket_taxonomies - assignments) ---
 
 
 class TaxonomyRead(BaseModel):
@@ -117,3 +117,90 @@ class TaxonomyRead(BaseModel):
     is_active: bool
 
     model_config = {"from_attributes": True}
+
+
+# --- Taxonomy reference tables ---
+
+
+class TaxonomyBusinessCategoryRead(BaseModel):
+    """Schema for public.taxonomy_business_category."""
+
+    id: uuid.UUID
+    client_id: uuid.UUID | None
+    l1: str
+    l2: str
+    l3: str
+    node: str
+    label: str | None
+    parent_node_id: str | None
+    is_active: bool | None
+    created_at: datetime | None
+    updated_at: datetime | None
+    keywords: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TaxonomyApplicationRead(BaseModel):
+    """Schema for public.taxonomy_application."""
+
+    id: uuid.UUID
+    client_id: uuid.UUID | None
+    l1: str
+    l2: str
+    l3: str
+    node_id: str
+    label: str | None
+    software_vendor: str | None
+    is_active: bool | None
+    created_at: datetime | None
+    updated_at: datetime | None
+    product_name: str | None
+    keywords: dict | list | None  # jsonb
+    app_group: str | None
+    category: str | None
+    description: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TaxonomyResolutionRead(BaseModel):
+    """Schema for public.taxonomy_resolution."""
+
+    id: uuid.UUID
+    client_id: uuid.UUID | None
+    l1_outcome: str
+    l2_action_type: str
+    l3_resolution_code: str
+    resolution_code: str
+    resolution_durability: str | None
+    is_active: bool | None
+    created_at: datetime | None
+    updated_at: datetime | None
+    definition: str | None
+    examples: str | None
+    usage_guidance: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TaxonomyRootCauseRead(BaseModel):
+    """Schema for public.taxonomy_root_cause."""
+
+    id: uuid.UUID
+    client_id: uuid.UUID | None
+    l1_cause_domain: str
+    l2_cause_type: str
+    l3_root_cause: str
+    root_cause_code_id: str
+    usage_guidance: str | None
+    is_active: bool | None
+    created_at: datetime | None
+    updated_at: datetime | None
+    default_owner: str | None
+    preventability: str | None
+    change_related: str | None
+    definition: str | None
+    examples: str | None
+
+    model_config = ConfigDict(from_attributes=True)
