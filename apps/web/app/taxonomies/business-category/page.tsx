@@ -60,9 +60,7 @@ export default function BusinessCategoryTaxonomyPage() {
         </p>
       </CardHeader>
       <CardContent>
-        {error && (
-          <p className="text-sm text-destructive mb-4">{error}</p>
-        )}
+        {error && <p className="text-sm text-destructive mb-4">{error}</p>}
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : (
@@ -81,7 +79,10 @@ export default function BusinessCategoryTaxonomyPage() {
             <TableBody>
               {data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={7}
+                    className="text-center text-muted-foreground"
+                  >
                     No rows
                   </TableCell>
                 </TableRow>
@@ -94,7 +95,13 @@ export default function BusinessCategoryTaxonomyPage() {
                     <TableCell>{row.node}</TableCell>
                     <TableCell>{row.label ?? "—"}</TableCell>
                     <TableCell>{row.parent_node_id ?? "—"}</TableCell>
-                    <TableCell>{row.is_active != null ? (row.is_active ? "Yes" : "No") : "—"}</TableCell>
+                    <TableCell>
+                      {row.is_active != null
+                        ? row.is_active
+                          ? "Yes"
+                          : "No"
+                        : "—"}
+                    </TableCell>
                   </TableRow>
                 ))
               )}

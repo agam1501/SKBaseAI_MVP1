@@ -60,9 +60,7 @@ export default function RootCauseTaxonomyPage() {
         </p>
       </CardHeader>
       <CardContent>
-        {error && (
-          <p className="text-sm text-destructive mb-4">{error}</p>
-        )}
+        {error && <p className="text-sm text-destructive mb-4">{error}</p>}
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : (
@@ -79,7 +77,10 @@ export default function RootCauseTaxonomyPage() {
             <TableBody>
               {data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-muted-foreground"
+                  >
                     No rows
                   </TableCell>
                 </TableRow>
@@ -90,7 +91,13 @@ export default function RootCauseTaxonomyPage() {
                     <TableCell>{row.l2_cause_type}</TableCell>
                     <TableCell>{row.l3_root_cause}</TableCell>
                     <TableCell>{row.root_cause_code_id}</TableCell>
-                    <TableCell>{row.is_active != null ? (row.is_active ? "Yes" : "No") : "—"}</TableCell>
+                    <TableCell>
+                      {row.is_active != null
+                        ? row.is_active
+                          ? "Yes"
+                          : "No"
+                        : "—"}
+                    </TableCell>
                   </TableRow>
                 ))
               )}

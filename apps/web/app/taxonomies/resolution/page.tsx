@@ -60,9 +60,7 @@ export default function ResolutionTaxonomyPage() {
         </p>
       </CardHeader>
       <CardContent>
-        {error && (
-          <p className="text-sm text-destructive mb-4">{error}</p>
-        )}
+        {error && <p className="text-sm text-destructive mb-4">{error}</p>}
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : (
@@ -80,7 +78,10 @@ export default function ResolutionTaxonomyPage() {
             <TableBody>
               {data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-muted-foreground"
+                  >
                     No rows
                   </TableCell>
                 </TableRow>
@@ -92,7 +93,13 @@ export default function ResolutionTaxonomyPage() {
                     <TableCell>{row.l3_resolution_code}</TableCell>
                     <TableCell>{row.resolution_code}</TableCell>
                     <TableCell>{row.resolution_durability ?? "—"}</TableCell>
-                    <TableCell>{row.is_active != null ? (row.is_active ? "Yes" : "No") : "—"}</TableCell>
+                    <TableCell>
+                      {row.is_active != null
+                        ? row.is_active
+                          ? "Yes"
+                          : "No"
+                        : "—"}
+                    </TableCell>
                   </TableRow>
                 ))
               )}

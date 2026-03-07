@@ -68,9 +68,7 @@ async def get_ticket_taxonomies(
 def _client_filter(model, client_id: uuid.UUID | None):
     if client_id is None:
         return select(model)
-    return select(model).where(
-        or_(model.client_id.is_(None), model.client_id == client_id)
-    )
+    return select(model).where(or_(model.client_id.is_(None), model.client_id == client_id))
 
 
 @router.get(

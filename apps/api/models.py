@@ -166,9 +166,7 @@ class TicketProposalFeedback(Base):
 class TaxonomyBusinessCategory(Base):
     __tablename__ = "taxonomy_business_category"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     client_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     l1: Mapped[str] = mapped_column(String(255), nullable=False)
     l2: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -189,9 +187,7 @@ class TaxonomyBusinessCategory(Base):
 class TaxonomyApplication(Base):
     __tablename__ = "taxonomy_application"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     client_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     l1: Mapped[str] = mapped_column(String(255), nullable=False)
     l2: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -216,9 +212,7 @@ class TaxonomyApplication(Base):
 class TaxonomyResolution(Base):
     __tablename__ = "taxonomy_resolution"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     client_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     l1_outcome: Mapped[str] = mapped_column(String(255), nullable=False)
     l2_action_type: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -240,9 +234,7 @@ class TaxonomyResolution(Base):
 class TaxonomyRootCause(Base):
     __tablename__ = "taxonomy_root_cause"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     client_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     l1_cause_domain: Mapped[str] = mapped_column(String(255), nullable=False)
     l2_cause_type: Mapped[str] = mapped_column(String(255), nullable=False)

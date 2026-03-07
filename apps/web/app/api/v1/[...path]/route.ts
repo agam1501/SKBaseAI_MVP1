@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServer } from "@/lib/supabase-server";
 
 /** Backend API base URL. Fallback for local dev when RAILWAY_API_URL is not set. */
-const API_BASE_URL =
-  process.env.RAILWAY_API_URL ?? "http://127.0.0.1:8000";
+const API_BASE_URL = process.env.RAILWAY_API_URL ?? "http://127.0.0.1:8000";
 
 export async function GET(
   req: NextRequest,

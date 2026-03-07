@@ -144,10 +144,7 @@ export const apiClient = {
       { method: "PATCH", body: JSON.stringify(body) },
       options,
     ),
-  getTaxonomyBusinessCategories: (
-    token: string,
-    options?: ApiOptions,
-  ) =>
+  getTaxonomyBusinessCategories: (token: string, options?: ApiOptions) =>
     apiFetch<TaxonomyBusinessCategory[]>(
       "/api/v1/taxonomies/business-category",
       token,
