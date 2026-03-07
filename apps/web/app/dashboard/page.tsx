@@ -176,19 +176,22 @@ function FilterPopoverContent({
         <p className="text-xs font-medium text-muted-foreground px-2 py-1">
           Filter by…
         </p>
-        {(Object.entries(FILTER_COLUMNS) as [FilterColumn, (typeof FILTER_COLUMNS)[FilterColumn]][]).map(
-          ([key, config]) => (
-            <Button
-              key={key}
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start text-sm font-normal"
-              onClick={() => handleColumnSelect(key)}
-            >
-              {config.label}
-            </Button>
-          ),
-        )}
+        {(
+          Object.entries(FILTER_COLUMNS) as [
+            FilterColumn,
+            (typeof FILTER_COLUMNS)[FilterColumn],
+          ][]
+        ).map(([key, config]) => (
+          <Button
+            key={key}
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-sm font-normal"
+            onClick={() => handleColumnSelect(key)}
+          >
+            {config.label}
+          </Button>
+        ))}
       </div>
     );
   }
