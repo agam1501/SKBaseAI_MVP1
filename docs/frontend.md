@@ -76,7 +76,7 @@ The matcher skips `_next/static`, `_next/image`, and `favicon.ico`.
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Yes |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase browser client | Yes |
-| `RAILWAY_API_URL` | FastAPI base URL (BFF proxy only) | **No** |
+| `RAILWAY_API_URL` | Backend API base URL (BFF proxy only) | **No** |
 
 **Local**: all vars come from root `.env` via `dotenv-cli`
 **Production**: vars set in Vercel project settings (`vercel env add`)

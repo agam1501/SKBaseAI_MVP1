@@ -245,7 +245,7 @@ CORS is still configured on Railway for local development convenience, but it's 
 |---|---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Vercel + local | Yes | Supabase project URL for browser client |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Vercel + local | Yes | Supabase anon key (safe to expose) |
-| `RAILWAY_API_URL` | Vercel + local | **No** | Railway base URL — server-only |
+| `RAILWAY_API_URL` | Vercel + local | **No** | Railway/backend base URL — server-only |
 | `SUPABASE_JWT_SECRET` | Railway | No | JWT verification (HS256 legacy) |
 | `DATABASE_URL` | Railway | No | Postgres connection string |
 | `CORS_ORIGINS` | Railway | No | Allowed origins (localhost only now) |

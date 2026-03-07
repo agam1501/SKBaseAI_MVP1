@@ -1,4 +1,5 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+/** Use same-origin so the Next.js BFF proxy (RAILWAY_API_URL) is used; backend URL is server-only. */
+const API_URL = "";
 
 export type ApiOptions = { clientId?: string | null };
 

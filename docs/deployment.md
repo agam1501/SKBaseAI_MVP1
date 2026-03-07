@@ -36,12 +36,12 @@ railway up --detach
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://<ref>.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | from Supabase → Settings → API |
-| `NEXT_PUBLIC_API_URL` | Railway backend URL |
+| `RAILWAY_API_URL` | Backend API base URL (e.g. Railway) — server-only, used by BFF proxy |
 
 ```bash
 vercel env add NEXT_PUBLIC_SUPABASE_URL production --value "..."
 vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production --value "..."
-vercel env add NEXT_PUBLIC_API_URL production --value "..."
+vercel env add RAILWAY_API_URL production --value "https://...railway.app"
 ```
 
 ### Deploy
@@ -78,7 +78,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 SUPABASE_JWT_SECRET=...
 NEXT_PUBLIC_SUPABASE_URL=https://...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-NEXT_PUBLIC_API_URL=http://localhost:8000
+RAILWAY_API_URL=http://localhost:8000
 CORS_ORIGINS=http://localhost:3000
 DEFAULT_CLIENT_ID=00000000-0000-0000-0000-000000000001
 ```
