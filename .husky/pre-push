@@ -13,6 +13,14 @@ fi
 echo "Running npm format..."
 (cd apps/web && npm run format) || exit 1
 
+# Run ESLint on TypeScript files
+echo "Running ESLint..."
+(cd apps/web && npm run lint) || exit 1
+
+# Run TypeScript type check
+echo "Running TypeScript type check..."
+(cd apps/web && npx tsc --noEmit) || exit 1
+
 # Fail if formatters changed any files (so they get committed before push)
 if ! git diff --quiet; then
   echo ""
