@@ -18,7 +18,7 @@ apps/api/
 ├── models.py        # SQLAlchemy ORM models matching Supabase schema
 ├── schemas.py       # Pydantic request/response models
 ├── routes/
-│   ├── tickets.py   # POST /tickets, GET /tickets, GET /tickets/{id}
+│   ├── tickets.py   # POST /tickets, GET /tickets, GET /tickets/{id}, PATCH /tickets/{id}/status
 │   ├── proposals.py # GET /proposals/tickets/{id}/latest, POST /proposals/{id}/feedback
 │   └── taxonomies.py# GET /taxonomies/tickets/{id}
 └── services/
@@ -51,6 +51,26 @@ cd apps/api
 python -m venv .venv && .venv/bin/pip install -e .
 .venv/bin/uvicorn main:app --reload
 ```
+
+## Ticket Endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/tickets` | Create a single ticket |
+| `POST` | `/tickets/upload` | Bulk CSV upload |
+| `GET` | `/tickets` | List tickets (search, sort, filter) |
+| `GET` | `/tickets/{id}` | Get single ticket (all fields) |
+| `PATCH` | `/tickets/{id}/status` | Update `status` + `is_resolved` |
+
+### Status Update
+
+`PATCH /tickets/{id}/status` accepts a `TicketStatusUpdate` body:
+
+```json
+{ "status": "CLOSED", "is_resolved": true }
+```
+
+Returns the full `TicketRead` response on success. Enforces `client_id` scoping — returns 404 if the ticket belongs to a different client.
 
 ## Health Endpoints
 
