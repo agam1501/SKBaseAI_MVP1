@@ -1,7 +1,8 @@
 "use client";
 
 import { useClientContext } from "@/contexts/ClientContext";
-import { apiClient, type TaxonomyResolution } from "@/lib/api-client";
+import { type TaxonomyResolution } from "@/app/taxonomies/types";
+import { apiClient } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -35,9 +36,11 @@ export default function ResolutionTaxonomyPage() {
     setLoading(true);
     setError(null);
     try {
-      const list = await apiClient.getTaxonomyResolutions(token, {
-        clientId: selectedClient?.client_id ?? undefined,
-      });
+      const list = await apiClient.get<TaxonomyResolution[]>(
+        "/api/v1/taxonomies/resolution",
+        token,
+        { clientId: selectedClient?.client_id ?? undefined },
+      );
       setData(list);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
