@@ -94,16 +94,96 @@ Vector embeddings of ticket text chunks.
 | embedding_model | text | model used |
 
 ### ticket_taxonomies
-LLM-extracted classification of tickets.
+LLM-extracted classification of tickets (assignments linking tickets to taxonomy reference tables).
 
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
+| client_id | uuid | tenant |
 | ticket_id | uuid FK → tickets | |
+| taxonomy_type | text | e.g. `business_category`, `application`, `resolution`, `root_cause` |
 | l1 / l2 / l3 | text | 3-level taxonomy hierarchy |
+| node | text | leaf node / code id from reference table |
 | confidence_score | float | |
+| source | text | assignment source |
+| source_model_version | text | model version if LLM-assigned |
 | is_active | bool | set to false on re-enrichment (audit trail) |
-| taxonomy_assigned_at | timestamptz | when LLM assigned the taxonomy |
+| taxonomy_assigned_at | timestamptz | when assigned |
+| created_at | timestamptz | |
+
+### taxonomy_business_category
+Reference table: L1/L2/L3 business category hierarchy. Optional per-client override via `client_id` (null = global).
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | default gen_random_uuid() |
+| client_id | uuid | null = global |
+| l1 | text | top level |
+| l2 | text | |
+| l3 | text | |
+| node | text | unique node identifier |
+| label | text | display label |
+| parent_node_id | text | parent in hierarchy |
+| is_active | bool | default true |
+| created_at / updated_at | timestamptz | |
+| keywords | text | search/keyword hints |
+
+### taxonomy_application
+Reference table: applications/products (L1/L2/L3 + vendor, product, keywords). Optional per-client override.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | default gen_random_uuid() |
+| client_id | uuid | null = global |
+| l1 / l2 / l3 | text | hierarchy |
+| node_id | text | unique node identifier |
+| label | text | |
+| software_vendor | text | |
+| product_name | text | |
+| keywords | jsonb | array or object of keywords |
+| app_group | text | |
+| category | text | |
+| description | text | |
+| is_active | bool | default true |
+| created_at / updated_at | timestamptz | |
+
+### taxonomy_resolution
+Reference table: resolution outcomes and action types (L1 outcome, L2 action, L3 resolution code).
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | default gen_random_uuid() |
+| client_id | uuid | null = global |
+| l1_outcome | text | |
+| l2_action_type | text | |
+| l3_resolution_code | text | |
+| resolution_code | text | primary code |
+| resolution_durability | text | |
+| definition | text | |
+| examples | text | |
+| usage_guidance | text | |
+| is_active | bool | default true |
+| created_at / updated_at | timestamptz | |
+
+### taxonomy_root_cause
+Reference table: root cause domains and codes (L1 domain, L2 type, L3 root cause).
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | default gen_random_uuid() |
+| client_id | uuid | null = global |
+| l1_cause_domain | text | |
+| l2_cause_type | text | |
+| l3_root_cause | text | |
+| root_cause_code_id | text | primary code |
+| definition | text | |
+| examples | text | |
+| usage_guidance | text | |
+| default_owner | text | suggested owner |
+| preventability | text | |
+| change_related | text | |
+| is_active | bool | default true |
+| created_at / updated_at | timestamptz | |
 
 ### ticket_proposals
 AI-generated resolution proposals.

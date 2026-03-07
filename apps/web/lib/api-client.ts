@@ -69,7 +69,12 @@ export const apiClient = {
       { method: "POST", body: JSON.stringify(body) },
       options,
     ),
-  patch: <T>(path: string, token: string, body: unknown, options?: ApiOptions) =>
+  patch: <T>(
+    path: string,
+    token: string,
+    body: unknown,
+    options?: ApiOptions,
+  ) =>
     apiFetch<T>(
       path,
       token,

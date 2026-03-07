@@ -20,7 +20,7 @@ apps/api/
 ├── routes/
 │   ├── tickets.py   # POST /tickets, GET /tickets, GET /tickets/{id}, PATCH /tickets/{id}/status
 │   ├── proposals.py # GET /proposals/tickets/{id}/latest, POST /proposals/{id}/feedback
-│   └── taxonomies.py# GET /taxonomies/tickets/{id}
+│   └── taxonomies.py# GET /taxonomies/tickets/{id}, GET /taxonomies/business-category, /application, /resolution, /root-cause
 └── services/
     ├── llm.py       # extract_taxonomies(), generate_proposal() — Phase 2 stub
     ├── embeddings.py# chunk_text(), embed_texts() — Phase 2 stub
@@ -81,6 +81,33 @@ Returns the full `TicketRead` response on success. Enforces `client_id` scoping 
 
 `/health/db` response: `{"status": "ok", "db": "connected"}`
 
+## Schemas (Pydantic response models)
+
+| Schema | ORM model | Use |
+|---|---|---|
+| `TicketRead`, `TicketCreate` | `Ticket` | Tickets CRUD |
+| `ProposalRead` | `TicketProposal` | Proposals |
+| `FeedbackRead`, `FeedbackCreate` | `TicketProposalFeedback` | Feedback |
+| `TaxonomyRead` | `TicketTaxonomy` | Taxonomies assigned to a ticket |
+| `TaxonomyBusinessCategoryRead` | `TaxonomyBusinessCategory` | GET /taxonomies/business-category |
+| `TaxonomyApplicationRead` | `TaxonomyApplication` | GET /taxonomies/application |
+| `TaxonomyResolutionRead` | `TaxonomyResolution` | GET /taxonomies/resolution |
+| `TaxonomyRootCauseRead` | `TaxonomyRootCause` | GET /taxonomies/root-cause |
+
+All taxonomy reference schemas include: `id`, `client_id`, hierarchy fields (e.g. `l1`, `l2`, `l3` or `l1_outcome`/`l2_action_type`/`l3_resolution_code`), `is_active`, `created_at`, `updated_at`, plus type-specific fields (e.g. `node`, `label`, `keywords` for business category; `resolution_code`, `definition` for resolution). See `apps/api/schemas.py` and `apps/api/models.py` for full field lists.
+
+## Taxonomy list endpoints
+
+All taxonomy list endpoints accept optional filtering by client via the **X-Client-Id** header (same as tickets). If the header is present and the user has access, only rows with that `client_id` or `client_id IS NULL` (global) are returned; if the header is omitted, all rows are returned.
+
+| Endpoint | Response model | Description |
+|---|---|---|
+| `GET /api/v1/taxonomies/tickets/{ticket_id}` | `list[TaxonomyRead]` | Taxonomies assigned to a ticket |
+| `GET /api/v1/taxonomies/business-category` | `list[TaxonomyBusinessCategoryRead]` | Business category reference table |
+| `GET /api/v1/taxonomies/application` | `list[TaxonomyApplicationRead]` | Application reference table |
+| `GET /api/v1/taxonomies/resolution` | `list[TaxonomyResolutionRead]` | Resolution reference table |
+| `GET /api/v1/taxonomies/root-cause` | `list[TaxonomyRootCauseRead]` | Root cause reference table |
+
 ## Pydantic / SQLAlchemy Sync
 
 On startup, `main.py` asserts that every Pydantic response schema's fields are a subset of the corresponding ORM model's columns:
@@ -90,6 +117,9 @@ _assert_schema_subset(Ticket, TicketRead)
 _assert_schema_subset(TicketProposal, ProposalRead)
 _assert_schema_subset(TicketProposalFeedback, FeedbackRead)
 _assert_schema_subset(TicketTaxonomy, TaxonomyRead)
+# Taxonomy reference tables (no startup assert; used only for list endpoints)
+# TaxonomyBusinessCategoryRead, TaxonomyApplicationRead, TaxonomyResolutionRead, TaxonomyRootCauseRead
+# ORM: TaxonomyBusinessCategory, TaxonomyApplication, TaxonomyResolution, TaxonomyRootCause
 ```
 
 If a field is added to a Pydantic schema without a matching ORM column, the app will **crash at startup** with a clear error — catching drift at deploy time, not silently at runtime.

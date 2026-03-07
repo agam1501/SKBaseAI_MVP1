@@ -332,7 +332,7 @@ export default function DashboardPage() {
     } finally {
       setTicketsLoading(false);
     }
-  }, [selectedClient]);
+  }, [selectedClient, supabase]);
 
   useEffect(() => {
     loadTickets();
@@ -508,9 +508,14 @@ export default function DashboardPage() {
               <h2 className="text-lg font-semibold">
                 Tickets for {selectedClient.name}
               </h2>
-              <Button asChild>
-                <Link href="/upload_tickets">Upload</Link>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" asChild>
+                  <Link href="/taxonomies">Taxonomies</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/upload_tickets">Upload</Link>
+                </Button>
+              </div>
             </div>
             {ticketsError && (
               <p className="text-destructive text-sm">{ticketsError}</p>

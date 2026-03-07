@@ -31,7 +31,7 @@ export default function UploadTicketsPage() {
       if (!token) return;
       await loadClients(token);
     });
-  }, [loadClients]);
+  }, [loadClients, router, supabase]);
 
   useEffect(() => {
     setUploadResult(null);

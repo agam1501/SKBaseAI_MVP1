@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pgvector.sqlalchemy import VECTOR
 from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, Text, func
-from sqlalchemy.dialects.postgresql import ARRAY, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -158,3 +158,98 @@ class TicketProposalFeedback(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     proposal: Mapped["TicketProposal"] = relationship(back_populates="feedback")
+
+
+# --- Taxonomy reference tables ---
+
+
+class TaxonomyBusinessCategory(Base):
+    __tablename__ = "taxonomy_business_category"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    client_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    l1: Mapped[str] = mapped_column(String(255), nullable=False)
+    l2: Mapped[str] = mapped_column(String(255), nullable=False)
+    l3: Mapped[str] = mapped_column(String(255), nullable=False)
+    node: Mapped[str] = mapped_column(String(255), nullable=False)
+    label: Mapped[str | None] = mapped_column(Text)
+    parent_node_id: Mapped[str | None] = mapped_column(String(255))
+    is_active: Mapped[bool | None] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    keywords: Mapped[str | None] = mapped_column(Text)
+
+
+class TaxonomyApplication(Base):
+    __tablename__ = "taxonomy_application"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    client_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    l1: Mapped[str] = mapped_column(String(255), nullable=False)
+    l2: Mapped[str] = mapped_column(String(255), nullable=False)
+    l3: Mapped[str] = mapped_column(String(255), nullable=False)
+    node_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    label: Mapped[str | None] = mapped_column(Text)
+    software_vendor: Mapped[str | None] = mapped_column(String(255))
+    is_active: Mapped[bool | None] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    product_name: Mapped[str | None] = mapped_column(String(255))
+    keywords: Mapped[dict | list | None] = mapped_column(JSONB)
+    app_group: Mapped[str | None] = mapped_column(String(255))
+    category: Mapped[str | None] = mapped_column(String(255))
+    description: Mapped[str | None] = mapped_column(Text)
+
+
+class TaxonomyResolution(Base):
+    __tablename__ = "taxonomy_resolution"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    client_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    l1_outcome: Mapped[str] = mapped_column(String(255), nullable=False)
+    l2_action_type: Mapped[str] = mapped_column(String(255), nullable=False)
+    l3_resolution_code: Mapped[str] = mapped_column(String(255), nullable=False)
+    resolution_code: Mapped[str] = mapped_column(String(255), nullable=False)
+    resolution_durability: Mapped[str | None] = mapped_column(String(255))
+    is_active: Mapped[bool | None] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    definition: Mapped[str | None] = mapped_column(Text)
+    examples: Mapped[str | None] = mapped_column(Text)
+    usage_guidance: Mapped[str | None] = mapped_column(Text)
+
+
+class TaxonomyRootCause(Base):
+    __tablename__ = "taxonomy_root_cause"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    client_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    l1_cause_domain: Mapped[str] = mapped_column(String(255), nullable=False)
+    l2_cause_type: Mapped[str] = mapped_column(String(255), nullable=False)
+    l3_root_cause: Mapped[str] = mapped_column(String(255), nullable=False)
+    root_cause_code_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    usage_guidance: Mapped[str | None] = mapped_column(Text)
+    is_active: Mapped[bool | None] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    default_owner: Mapped[str | None] = mapped_column(String(255))
+    preventability: Mapped[str | None] = mapped_column(String(255))
+    change_related: Mapped[str | None] = mapped_column(String(255))
+    definition: Mapped[str | None] = mapped_column(Text)
+    examples: Mapped[str | None] = mapped_column(Text)
