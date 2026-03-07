@@ -332,7 +332,7 @@ export default function DashboardPage() {
     } finally {
       setTicketsLoading(false);
     }
-  }, [selectedClient]);
+  }, [selectedClient, supabase]);
 
   useEffect(() => {
     loadTickets();
