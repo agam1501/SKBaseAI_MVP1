@@ -120,7 +120,6 @@ export default function TicketDetailPage() {
           <CardHeader>
             <h1 className="text-xl font-bold">{ticket.short_desc}</h1>
           </CardHeader>
-<<<<<<< HEAD
           <CardContent className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
