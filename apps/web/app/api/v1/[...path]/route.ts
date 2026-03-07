@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServer } from "@/lib/supabase-server";
 
-const BACKEND_URL = process.env.API_BACKEND_URL
+const BACKEND_URL = process.env.API_BACKEND_URL;
 
 export async function GET(
   req: NextRequest,
