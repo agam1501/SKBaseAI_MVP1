@@ -115,4 +115,5 @@ async def list_root_cause(
     db: AsyncSession = Depends(get_db),
     client_id: uuid.UUID | None = Depends(get_optional_client_id),
 ):
+    result = await db.execute(_client_filter(TaxonomyRootCause, client_id))
     return result.scalars().all()
