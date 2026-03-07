@@ -28,7 +28,6 @@ type Ticket = {
   resolved_at: string | null;
 };
 
-
 function Field({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="space-y-1">
@@ -65,8 +64,6 @@ export default function TicketDetailPage() {
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : "Failed to load ticket");
       }
-
-
     });
   }, [id, supabase, selectedClient, router]);
 
@@ -103,7 +100,9 @@ export default function TicketDetailPage() {
     return <div className="p-8 text-sm text-muted-foreground">Loading...</div>;
 
   const statusLabel = ticket.status ?? (ticket.is_resolved ? "CLOSED" : "OPEN");
-  const statusColor = ticket.is_resolved ? "text-gray-500" : "text-amber-600 font-medium";
+  const statusColor = ticket.is_resolved
+    ? "text-gray-500"
+    : "text-amber-600 font-medium";
 
   return (
     <div className="min-h-screen p-8">
@@ -217,7 +216,6 @@ export default function TicketDetailPage() {
         </Card>
 
         {error && <p className="text-destructive text-sm">{error}</p>}
-
       </div>
     </div>
   );
