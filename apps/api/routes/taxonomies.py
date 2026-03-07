@@ -7,12 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config import settings
 from db import get_db
 from models import (
-    UserClient,
-    TicketTaxonomy,
     TaxonomyApplication,
     TaxonomyBusinessCategory,
     TaxonomyResolution,
     TaxonomyRootCause,
+    TicketTaxonomy,
+    UserClient,
 )
 from schemas import (
     TaxonomyApplicationRead,
