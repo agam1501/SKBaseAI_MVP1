@@ -46,6 +46,7 @@ class TicketCreate(BaseModel):
     status: TicketStatus | None = None
     priority: str | None = None
     is_resolved: bool = False
+    is_test: bool = False
 
 
 class TicketRead(BaseModel):
@@ -61,6 +62,7 @@ class TicketRead(BaseModel):
     status: TicketStatus | None
     priority: str | None
     is_resolved: bool
+    is_test: bool
     created_at: datetime
     updated_at: datetime
     resolved_at: datetime | None

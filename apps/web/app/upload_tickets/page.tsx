@@ -20,6 +20,7 @@ export default function UploadTicketsPage() {
   const [error, setError] = useState<string | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [isTest, setIsTest] = useState(false);
   const [uploadResult, setUploadResult] = useState<TicketUploadResult | null>(
     null,
   );
@@ -46,8 +47,11 @@ export default function UploadTicketsPage() {
     setUploadResult(null);
     setError(null);
     try {
+      const uploadPath = isTest
+        ? "/api/v1/tickets/upload?is_test=true"
+        : "/api/v1/tickets/upload";
       const result = await apiClient.uploadTickets(
-        "/api/v1/tickets/upload",
+        uploadPath,
         token,
         uploadFile,
         { clientId: selectedClient.client_id },
@@ -115,6 +119,23 @@ export default function UploadTicketsPage() {
                     <span>Choose file</span>
                   </Button>
                 </label>
+                <label className="flex items-center gap-2 w-full cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isTest}
+                    onChange={(e) => setIsTest(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    Mark as test data
+                  </span>
+                </label>
+                {isTest && (
+                  <p className="text-xs text-muted-foreground">
+                    These tickets will be marked as test data and can be filtered
+                    out on the dashboard.
+                  </p>
+                )}
                 <Button
                   type="button"
                   disabled={!uploadFile || uploading}
