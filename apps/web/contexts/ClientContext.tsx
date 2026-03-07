@@ -51,7 +51,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
         () =>
           reject(
             new Error(
-              "Request timed out. Check that the API proxy (API_BACKEND_URL) is configured.",
+              "Request timed out. Check that the API proxy (RAILWAY_API_URL) is configured.",
             ),
           ),
         timeoutMs,

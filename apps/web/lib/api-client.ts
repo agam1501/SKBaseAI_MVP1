@@ -1,4 +1,4 @@
-/** Use same-origin so the Next.js BFF proxy (API_BACKEND_URL) is used; backend URL is server-only. */
+/** Use same-origin so the Next.js BFF proxy (RAILWAY_API_URL) is used; backend URL is server-only. */
 const API_URL = "";
 
 export type ApiOptions = { clientId?: string | null };

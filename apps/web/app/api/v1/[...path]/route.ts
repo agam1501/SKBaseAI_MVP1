@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServer } from "@/lib/supabase-server";
 
-const BACKEND_URL = process.env.API_BACKEND_URL;
+const RAILWAY_URL = process.env.RAILWAY_API_URL;
 
 export async function GET(
   req: NextRequest,
@@ -49,7 +49,7 @@ async function proxy(
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const url = `${BACKEND_URL}/api/v1/${pathSegments.join("/")}`;
+  const url = `${RAILWAY_URL}/api/v1/${pathSegments.join("/")}`;
   const clientId = req.headers.get("x-client-id");
   const headers: Record<string, string> = {
     Authorization: `Bearer ${session.access_token}`,

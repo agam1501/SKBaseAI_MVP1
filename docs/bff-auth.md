@@ -68,7 +68,7 @@ The fix is the **BFF (Backend For Frontend)** pattern: Next.js API routes act as
 │  ─────────────────────────────►                                          │
 │                                 /api/v1/[...path]/route.ts:              │
 │                                 - reads JWT from cookie (server-side)    │
-│                                 - fetch(BACKEND_URL, {                   │
+│                                 - fetch(RAILWAY_URL, {                   │
 │                                     Authorization: Bearer <jwt>          │
 │                                   })  ──────────────────────────────►   │
 │                                                              verify JWT  │
@@ -245,7 +245,7 @@ CORS is still configured on Railway for local development convenience, but it's 
 |---|---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Vercel + local | Yes | Supabase project URL for browser client |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Vercel + local | Yes | Supabase anon key (safe to expose) |
-| `API_BACKEND_URL` | Vercel + local | **No** | Backend API base URL — server-only |
+| `RAILWAY_API_URL` | Vercel + local | **No** | Railway/backend base URL — server-only |
 | `SUPABASE_JWT_SECRET` | Railway | No | JWT verification (HS256 legacy) |
 | `DATABASE_URL` | Railway | No | Postgres connection string |
 | `CORS_ORIGINS` | Railway | No | Allowed origins (localhost only now) |
