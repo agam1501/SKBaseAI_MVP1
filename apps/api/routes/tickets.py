@@ -11,7 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config import settings
 from db import get_db
 from models import Ticket, TicketStatus, UserClient
-from schemas import TicketCreate, TicketRead, TicketStatusUpdate, TicketUploadResult, TicketUploadRowError
+from schemas import (
+    TicketCreate,
+    TicketRead,
+    TicketStatusUpdate,
+    TicketUploadResult,
+    TicketUploadRowError,
+)
 
 router = APIRouter(tags=["tickets"])
 
