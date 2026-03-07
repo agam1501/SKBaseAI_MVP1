@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServer } from "@/lib/supabase-server";
 
-const RAILWAY_URL = process.env.RAILWAY_API_URL;
+const BACKEND_URL = process.env.API_BACKEND_URL
 
 export async function GET(
   req: NextRequest,
@@ -14,7 +14,11 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { path: string[] } },
 ) {
-  return proxy(req, params.path, "POST", await req.json());
+  const contentType = req.headers.get("content-type") ?? "";
+  const body = contentType.includes("multipart/form-data")
+    ? await req.formData()
+    : await req.json().catch(() => undefined);
+  return proxy(req, params.path, "POST", body);
 }
 
 export async function PATCH(
@@ -45,14 +49,22 @@ async function proxy(
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const url = `${RAILWAY_URL}/api/v1/${pathSegments.join("/")}`;
+  const url = `${BACKEND_URL}/api/v1/${pathSegments.join("/")}`;
+  const clientId = req.headers.get("x-client-id");
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${session.access_token}`,
+  };
+  if (clientId) headers["X-Client-Id"] = clientId;
+
+  const isFormData = body instanceof FormData;
+  if (!isFormData) headers["Content-Type"] = "application/json";
+
   const res = await fetch(url, {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`,
-    },
-    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    headers,
+    ...(body !== undefined && body !== null
+      ? { body: isFormData ? body : JSON.stringify(body) }
+      : {}),
   });
 
   const data = await res.json();

@@ -76,7 +76,7 @@ The matcher skips `_next/static`, `_next/image`, and `favicon.ico`.
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Yes |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase browser client | Yes |
-| `RAILWAY_API_URL` | FastAPI base URL (BFF proxy only) | **No** |
+| `API_BACKEND_URL` | Backend API base URL (BFF proxy only) | **No** |
 
 **Local**: all vars come from root `.env` via `dotenv-cli`
 **Production**: vars set in Vercel project settings (`vercel env add`)
@@ -95,7 +95,7 @@ npm run dev   # uses dotenv -e ../../.env -- next dev
 
 To test against the deployed Railway API instead of a local FastAPI, set in `.env`:
 ```
-RAILWAY_API_URL=https://adventurous-fascination-production.up.railway.app
+API_BACKEND_URL=https://adventurous-fascination-production.up.railway.app
 ```
 Then `npm run dev` — browser → Next.js dev (3000) → Railway.
 
@@ -105,4 +105,4 @@ Revert to `http://localhost:8000` for fully local development.
 
 - Config: `apps/web/vercel.json`
 - Build command: `next build`
-- Env vars required: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `RAILWAY_API_URL`
+- Env vars required: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `API_BACKEND_URL`

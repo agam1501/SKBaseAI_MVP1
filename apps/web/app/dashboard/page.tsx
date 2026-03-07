@@ -174,6 +174,10 @@ export default function DashboardPage() {
                   <div className="px-4 py-8 text-center text-sm text-gray-500">
                     Loading tickets…
                   </div>
+                ) : ticketsError ? (
+                  <div className="px-4 py-8 text-center text-sm text-destructive">
+                    Could not load tickets: {ticketsError}
+                  </div>
                 ) : tickets.length === 0 ? (
                   <div className="px-4 py-8 text-center text-sm text-gray-500">
                     No tickets yet.
