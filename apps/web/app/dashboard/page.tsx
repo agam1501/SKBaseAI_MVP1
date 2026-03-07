@@ -632,17 +632,16 @@ export default function DashboardPage() {
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white">
                       {filteredTickets.map((t) => (
-                        <tr key={t.ticket_id} className="hover:bg-gray-50">
+                        <tr
+                          key={t.ticket_id}
+                          className="hover:bg-gray-50 cursor-pointer"
+                          onClick={() => router.push(`/tickets/${t.ticket_id}`)}
+                        >
                           <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                             {t.external_id ?? "—"}
                           </td>
-                          <td className="px-4 py-3 text-sm">
-                            <Link
-                              href={`/tickets/${t.ticket_id}`}
-                              className="font-medium text-gray-900 hover:text-gray-700 hover:underline"
-                            >
-                              {t.short_desc}
-                            </Link>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                            {t.short_desc}
                           </td>
                           <td className="px-4 py-3 text-sm whitespace-nowrap">
                             <span
