@@ -52,15 +52,25 @@ class TicketRead(BaseModel):
     ticket_id: uuid.UUID
     client_id: uuid.UUID
     external_id: str | None
+    source_system: str | None
     short_desc: str
     full_desc: str | None
+    cleaned_text: str | None
     resolution: str | None
+    root_cause: str | None
     status: TicketStatus | None
     priority: str | None
     is_resolved: bool
     created_at: datetime
+    updated_at: datetime
+    resolved_at: datetime | None
 
     model_config = {"from_attributes": True}
+
+
+class TicketStatusUpdate(BaseModel):
+    status: TicketStatus
+    is_resolved: bool
 
 
 class TicketUploadRowError(BaseModel):

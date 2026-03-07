@@ -69,6 +69,13 @@ export const apiClient = {
       { method: "POST", body: JSON.stringify(body) },
       options,
     ),
+  patch: <T>(path: string, token: string, body: unknown, options?: ApiOptions) =>
+    apiFetch<T>(
+      path,
+      token,
+      { method: "PATCH", body: JSON.stringify(body) },
+      options,
+    ),
 
   /** Upload CSV file; returns result for 201 and 422 (invalid rows), throws for other errors. */
   uploadTickets: async (

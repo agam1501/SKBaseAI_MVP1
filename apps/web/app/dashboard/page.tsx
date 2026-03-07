@@ -614,6 +614,12 @@ export default function DashboardPage() {
                           className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer select-none hover:text-gray-900"
                           onClick={() => toggleSort("created_at")}
                         >
+                          Priority
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                        >
                           Created
                           <SortIcon column="created_at" />
                         </th>
@@ -621,17 +627,16 @@ export default function DashboardPage() {
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white">
                       {filteredTickets.map((t) => (
-                        <tr key={t.ticket_id} className="hover:bg-gray-50">
+                        <tr
+                          key={t.ticket_id}
+                          className="hover:bg-gray-50 cursor-pointer"
+                          onClick={() => router.push(`/tickets/${t.ticket_id}`)}
+                        >
                           <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                             {t.external_id ?? "—"}
                           </td>
-                          <td className="px-4 py-3 text-sm">
-                            <Link
-                              href={`/tickets/${t.ticket_id}`}
-                              className="font-medium text-gray-900 hover:text-gray-700 hover:underline"
-                            >
-                              {t.short_desc}
-                            </Link>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                            {t.short_desc}
                           </td>
                           <td className="px-4 py-3 text-sm whitespace-nowrap">
                             <span
@@ -643,6 +648,9 @@ export default function DashboardPage() {
                             >
                               {getTicketStatus(t)}
                             </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                            {t.priority ?? "—"}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                             {new Date(t.created_at).toLocaleDateString()}

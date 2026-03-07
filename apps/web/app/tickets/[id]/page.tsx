@@ -1,6 +1,5 @@
 "use client";
 
-import ProposalCard from "@/components/ProposalCard";
 import { useClientContext } from "@/contexts/ClientContext";
 import { apiClient } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase";
@@ -9,20 +8,37 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import type { ReactNode } from "react";
 
 type Ticket = {
   ticket_id: string;
+  client_id: string;
+  external_id: string | null;
+  source_system: string | null;
   short_desc: string;
-  long_desc?: string | null;
-  full_desc?: string | null;
+  full_desc: string | null;
+  cleaned_text: string | null;
+  resolution: string | null;
+  root_cause: string | null;
+  status: string | null;
+  priority: string | null;
   is_resolved: boolean;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
 };
-type Proposal = {
-  id: string;
-  proposal_narrative?: string;
-  narrative?: string;
-  is_latest: boolean;
-};
+
+
+function Field({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        {label}
+      </p>
+      <p className="text-sm text-gray-900">{value ?? "—"}</p>
+    </div>
+  );
+}
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,8 +47,9 @@ export default function TicketDetailPage() {
   const { selectedClient } = useClientContext();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
-  const [proposal, setProposal] = useState<Proposal | null>(null);
+
   const [error, setError] = useState<string | null>(null);
+  const [toggling, setToggling] = useState(false);
 
   useEffect(() => {
     if (!selectedClient) return;
@@ -49,17 +66,32 @@ export default function TicketDetailPage() {
         setError(e instanceof Error ? e.message : "Failed to load ticket");
       }
 
-      try {
-        const p = await apiClient.get<Proposal>(
-          `/api/v1/proposals/tickets/${id}/latest`,
-          token,
-        );
-        setProposal(p);
-      } catch {
-        // no proposal yet — that's fine
-      }
+
     });
   }, [id, supabase, selectedClient, router]);
+
+  async function handleToggleStatus() {
+    if (!ticket) return;
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return;
+    const newIsResolved = !ticket.is_resolved;
+    const newStatus = newIsResolved ? "CLOSED" : "OPEN";
+    setToggling(true);
+    try {
+      const updated = await apiClient.patch<Ticket>(
+        `/api/v1/tickets/${id}/status`,
+        token,
+        { status: newStatus, is_resolved: newIsResolved },
+        { clientId: selectedClient?.client_id },
+      );
+      setTicket(updated);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to update status");
+    } finally {
+      setToggling(false);
+    }
+  }
 
   if (!selectedClient)
     return (
@@ -70,6 +102,9 @@ export default function TicketDetailPage() {
   if (!ticket)
     return <div className="p-8 text-sm text-muted-foreground">Loading...</div>;
 
+  const statusLabel = ticket.status ?? (ticket.is_resolved ? "CLOSED" : "OPEN");
+  const statusColor = ticket.is_resolved ? "text-gray-500" : "text-amber-600 font-medium";
+
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-2xl mx-auto space-y-6">
@@ -78,41 +113,111 @@ export default function TicketDetailPage() {
           className="text-muted-foreground p-0 h-auto"
           asChild
         >
-          <Link href="/tickets">← Back</Link>
+          <Link href="/dashboard">← Back</Link>
         </Button>
 
         <Card>
           <CardHeader>
             <h1 className="text-xl font-bold">{ticket.short_desc}</h1>
           </CardHeader>
-          <CardContent className="space-y-2">
-            {(ticket.full_desc ?? ticket.long_desc) && (
-              <p className="text-sm text-muted-foreground">
-                {ticket.full_desc ?? ticket.long_desc}
-              </p>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Status
+                </p>
+                <div className="flex items-center gap-3">
+                  <p className={`text-sm ${statusColor}`}>{statusLabel}</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleToggleStatus}
+                    disabled={toggling}
+                  >
+                    {toggling
+                      ? "Updating…"
+                      : ticket.is_resolved
+                        ? "Reopen"
+                        : "Close"}
+                  </Button>
+                </div>
+              </div>
+              <Field label="Priority" value={ticket.priority} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="External ID" value={ticket.external_id} />
+              <Field label="Source System" value={ticket.source_system} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field
+                label="Created"
+                value={new Date(ticket.created_at).toLocaleString()}
+              />
+              <Field
+                label="Updated"
+                value={new Date(ticket.updated_at).toLocaleString()}
+              />
+            </div>
+
+            {ticket.resolved_at && (
+              <Field
+                label="Resolved At"
+                value={new Date(ticket.resolved_at).toLocaleString()}
+              />
             )}
-            <span className="text-xs text-muted-foreground">
-              {ticket.is_resolved ? "Resolved" : "Open"}
-            </span>
+
+            <Field label="Short Description" value={ticket.short_desc} />
+
+            {ticket.full_desc && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Full Description
+                </p>
+                <p className="text-sm text-gray-900 whitespace-pre-wrap">
+                  {ticket.full_desc}
+                </p>
+              </div>
+            )}
+
+            {ticket.root_cause && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Root Cause
+                </p>
+                <p className="text-sm text-gray-900 whitespace-pre-wrap">
+                  {ticket.root_cause}
+                </p>
+              </div>
+            )}
+
+            {ticket.resolution && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Resolution
+                </p>
+                <p className="text-sm text-gray-900 whitespace-pre-wrap">
+                  {ticket.resolution}
+                </p>
+              </div>
+            )}
+
+            {ticket.cleaned_text && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Cleaned Text
+                </p>
+                <p className="text-sm text-gray-900 whitespace-pre-wrap">
+                  {ticket.cleaned_text}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {error && <p className="text-destructive text-sm">{error}</p>}
 
-        {proposal ? (
-          <ProposalCard
-            proposal={{
-              proposal_id: proposal.id,
-              narrative:
-                proposal.proposal_narrative ?? proposal.narrative ?? "",
-              is_latest: proposal.is_latest,
-            }}
-          />
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            No proposal generated yet.
-          </p>
-        )}
       </div>
     </div>
   );

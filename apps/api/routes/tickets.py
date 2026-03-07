@@ -11,7 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config import settings
 from db import get_db
 from models import Ticket, TicketStatus, UserClient
-from schemas import TicketCreate, TicketRead, TicketUploadResult, TicketUploadRowError
+from schemas import (
+    TicketCreate,
+    TicketRead,
+    TicketStatusUpdate,
+    TicketUploadResult,
+    TicketUploadRowError,
+)
 
 router = APIRouter(tags=["tickets"])
 
@@ -172,4 +178,24 @@ async def get_ticket(
     ticket = result.scalar_one_or_none()
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
+    return ticket
+
+
+@router.patch("/tickets/{ticket_id}/status", response_model=TicketRead)
+async def update_ticket_status(
+    ticket_id: uuid.UUID,
+    body: TicketStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    client_id: uuid.UUID = Depends(get_effective_client_id),
+):
+    result = await db.execute(
+        select(Ticket).where(Ticket.ticket_id == ticket_id, Ticket.client_id == client_id)
+    )
+    ticket = result.scalar_one_or_none()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    ticket.status = body.status
+    ticket.is_resolved = body.is_resolved
+    await db.commit()
+    await db.refresh(ticket)
     return ticket

@@ -15,10 +15,10 @@ apps/web/
 │   ├── layout.tsx              # Root layout, Tailwind globals
 │   ├── page.tsx                # Redirects / → /dashboard
 │   ├── login/page.tsx          # Email/password sign in + sign up
-│   ├── dashboard/page.tsx      # Home after login, links to tickets
+│   ├── dashboard/page.tsx      # Ticket table with search, sort, filter, clickable rows
 │   ├── tickets/
 │   │   ├── page.tsx            # Ticket list — calls GET /api/v1/tickets
-│   │   └── [id]/page.tsx       # Ticket detail + proposal display
+│   │   └── [id]/page.tsx       # Full ticket detail + status toggle (Close/Reopen)
 │   └── api/
 │       └── v1/[...path]/
 │           └── route.ts        # BFF proxy — forwards all /api/v1/* to Railway
@@ -49,9 +49,35 @@ All calls go through `lib/api-client.ts` using **relative URLs** — no token pa
 ```ts
 apiClient.get<Ticket[]>("/api/v1/tickets")
 apiClient.post("/api/v1/proposals/{id}/feedback", body)
+apiClient.patch<Ticket>("/api/v1/tickets/{id}/status", { status, is_resolved })
 ```
 
 Requests hit the Next.js BFF proxy at `/api/v1/*`, which handles JWT forwarding to Railway.
+
+## Dashboard — Ticket Table
+
+`app/dashboard/page.tsx` is the main post-login view. Features:
+
+- **Power search / filter builder** — choose a field, operator, and value; multiple filters are ANDed
+- **Column sorting** — click column headers (External ID, Short Desc, Status, Created) to toggle asc/desc
+- **Clickable rows** — each `<tr>` has `cursor-pointer` + `onClick` → navigates to `/tickets/{id}`
+
+## Ticket Detail Page
+
+`app/tickets/[id]/page.tsx` shows the full ticket record:
+
+| Field | Notes |
+|---|---|
+| Status | Displayed with color (amber = open, gray = closed); includes **Close / Reopen** toggle button |
+| Priority | |
+| External ID / Source System | |
+| Created / Updated / Resolved At | Formatted via `toLocaleString()` |
+| Short / Full Description | Full desc rendered with `whitespace-pre-wrap` |
+| Root Cause | |
+| Resolution | |
+| Cleaned Text | NLP-cleaned version of the description |
+
+The **Close/Reopen** button calls `PATCH /api/v1/tickets/{id}/status` and updates local state on success. Back link goes to `/dashboard` (not `/tickets`).
 
 ## Middleware
 
