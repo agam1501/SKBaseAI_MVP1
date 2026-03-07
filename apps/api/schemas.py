@@ -123,7 +123,9 @@ class TaxonomyRead(BaseModel):
     l1: str | None
     l2: str | None
     l3: str | None
+    node: str | None
     confidence_score: float | None
+    source: str | None
     is_active: bool
 
     model_config = {"from_attributes": True}

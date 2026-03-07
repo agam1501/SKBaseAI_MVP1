@@ -10,6 +10,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { ReactNode } from "react";
 
+type Taxonomy = {
+  id: string;
+  taxonomy_type: string | null;
+  l1: string | null;
+  l2: string | null;
+  l3: string | null;
+  node: string | null;
+  confidence_score: number | null;
+  source: string | null;
+};
+
+const TAXONOMY_LABELS: Record<string, string> = {
+  business_category: "Business Category",
+  application: "Application",
+  root_cause: "Root Cause",
+  resolution: "Resolution",
+};
+
+const TAXONOMY_ORDER = ["business_category", "application", "root_cause", "resolution"];
+
 type Ticket = {
   ticket_id: string;
   client_id: string;
@@ -46,7 +66,7 @@ export default function TicketDetailPage() {
   const { selectedClient } = useClientContext();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
-
+  const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState(false);
 
@@ -63,6 +83,17 @@ export default function TicketDetailPage() {
         setTicket(t);
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : "Failed to load ticket");
+      }
+
+      try {
+        const tax = await apiClient.get<Taxonomy[]>(
+          `/api/v1/taxonomies/tickets/${id}`,
+          token,
+          { clientId: selectedClient.client_id },
+        );
+        setTaxonomies(tax);
+      } catch {
+        // taxonomies not yet assigned — silently ignore
       }
     });
   }, [id, supabase, selectedClient, router]);
@@ -216,6 +247,48 @@ export default function TicketDetailPage() {
         </Card>
 
         {error && <p className="text-destructive text-sm">{error}</p>}
+
+        <Card>
+          <CardHeader>
+            <h2 className="text-base font-semibold">Taxonomies</h2>
+          </CardHeader>
+          <CardContent>
+            {taxonomies.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No taxonomies assigned yet.</p>
+            ) : (
+              <div className="space-y-5">
+                {TAXONOMY_ORDER.filter((type) =>
+                  taxonomies.some((t) => t.taxonomy_type === type)
+                ).map((type) => {
+                  const entries = taxonomies.filter((t) => t.taxonomy_type === type);
+                  return (
+                    <div key={type} className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        {TAXONOMY_LABELS[type] ?? type}
+                      </p>
+                      {entries.map((t) => (
+                        <div key={t.id} className="flex items-center justify-between">
+                          <p className="text-sm text-gray-900">
+                            {[t.l1, t.l2, t.l3].filter(Boolean).join(" › ")}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {t.confidence_score !== null && (
+                              <span className="rounded-full bg-gray-100 px-2 py-0.5">
+                                {Math.round(t.confidence_score * 100)}%
+                              </span>
+                            )}
+                            {t.source && <span>{t.source}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
       </div>
     </div>
   );
