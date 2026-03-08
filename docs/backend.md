@@ -56,10 +56,10 @@ python -m venv .venv && .venv/bin/pip install -e .
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/tickets` | Create a single ticket |
-| `POST` | `/tickets/upload` | Bulk CSV upload |
-| `GET` | `/tickets` | List tickets (search, sort, filter) |
-| `GET` | `/tickets/{id}` | Get single ticket (all fields) |
+| `POST` | `/tickets` | Create a single ticket (accepts `is_test` in body, default `false`) |
+| `POST` | `/tickets/upload` | Bulk CSV upload (accepts `?is_test=true` query param to mark batch as test data) |
+| `GET` | `/tickets` | List tickets (optional `?is_test=true\|false` query param to filter by test flag) |
+| `GET` | `/tickets/{id}` | Get single ticket (all fields, includes `is_test`) |
 | `PATCH` | `/tickets/{id}/status` | Update `status` + `is_resolved` |
 
 ### Status Update
@@ -71,6 +71,15 @@ python -m venv .venv && .venv/bin/pip install -e .
 ```
 
 Returns the full `TicketRead` response on success. Enforces `client_id` scoping — returns 404 if the ticket belongs to a different client.
+
+### Test Data (`is_test` flag)
+
+Tickets can be marked as test data to isolate them from production views.
+
+- **Create** (`POST /tickets`): include `"is_test": true` in the request body (default `false`)
+- **Upload** (`POST /tickets/upload?is_test=true`): pass `is_test=true` as a query param to mark all tickets in the batch
+- **List** (`GET /tickets?is_test=false`): filter by test flag — omit the param to return all tickets
+- **Frontend**: dashboard has a "Show test data" toggle (default off); test tickets show a TEST badge; upload page has a "Mark as test data" checkbox
 
 ## Health Endpoints
 
