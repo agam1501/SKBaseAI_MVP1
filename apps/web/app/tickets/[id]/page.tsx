@@ -22,7 +22,14 @@ type Taxonomy = {
 };
 
 const TAXONOMY_LABELS: Record<string, string> = {
-  business_category: "Business Category",
+  business_category: "Business",
+  application: "Application",
+  root_cause: "Root Cause",
+  resolution: "Resolution",
+};
+
+const TAXONOMY_FIELD_PREFIX: Record<string, string> = {
+  business_category: "Business",
   application: "Application",
   root_cause: "Root Cause",
   resolution: "Resolution",
@@ -68,6 +75,7 @@ export default function TicketDetailPage() {
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [taxonomyError, setTaxonomyError] = useState<string | null>(null);
   const [toggling, setToggling] = useState(false);
 
   useEffect(() => {
@@ -92,8 +100,10 @@ export default function TicketDetailPage() {
           { clientId: selectedClient.client_id },
         );
         setTaxonomies(tax);
-      } catch {
-        // taxonomies not yet assigned — silently ignore
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error("[taxonomy fetch]", msg, { ticketId: id, clientId: selectedClient.client_id });
+        setTaxonomyError(msg);
       }
     });
   }, [id, supabase, selectedClient, router]);
@@ -250,12 +260,17 @@ export default function TicketDetailPage() {
 
         <Card>
           <CardHeader>
-            <h2 className="text-base font-semibold">Taxonomies</h2>
+            <h2 className="text-lg font-bold">Taxonomies</h2>
           </CardHeader>
           <CardContent>
-            {taxonomies.length === 0 ? (
+            {taxonomyError && (
+              <p className="text-sm text-destructive mb-3">
+                Failed to load taxonomies: {taxonomyError}
+              </p>
+            )}
+            {!taxonomyError && taxonomies.length === 0 ? (
               <p className="text-sm text-muted-foreground">No taxonomies assigned yet.</p>
-            ) : (
+            ) : !taxonomyError && (
               <div className="space-y-5">
                 {TAXONOMY_ORDER.filter((type) =>
                   taxonomies.some((t) => t.taxonomy_type === type)
@@ -263,24 +278,20 @@ export default function TicketDetailPage() {
                   const entries = taxonomies.filter((t) => t.taxonomy_type === type);
                   return (
                     <div key={type} className="space-y-2">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
                         {TAXONOMY_LABELS[type] ?? type}
                       </p>
-                      {entries.map((t) => (
-                        <div key={t.id} className="flex items-center justify-between">
-                          <p className="text-sm text-gray-900">
-                            {[t.l1, t.l2, t.l3].filter(Boolean).join(" › ")}
-                          </p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            {t.confidence_score !== null && (
-                              <span className="rounded-full bg-gray-100 px-2 py-0.5">
-                                {Math.round(t.confidence_score * 100)}%
-                              </span>
-                            )}
-                            {t.source && <span>{t.source}</span>}
+                      {entries.map((t) => {
+                        const prefix = TAXONOMY_FIELD_PREFIX[type] ?? type;
+                        return (
+                          <div key={t.id} className="grid grid-cols-2 gap-x-4 gap-y-2">
+                            {t.l1 && <Field label={`${prefix} L1`} value={t.l1} />}
+                            {t.l2 && <Field label={`${prefix} L2`} value={t.l2} />}
+                            {t.l3 && <Field label={`${prefix} L3`} value={t.l3} />}
+                            {t.node && <Field label={`${prefix} Node`} value={t.node} />}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   );
                 })}

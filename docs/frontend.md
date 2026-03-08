@@ -18,7 +18,7 @@ apps/web/
 │   ├── dashboard/page.tsx      # Ticket table with search, sort, filter, clickable rows
 │   ├── tickets/
 │   │   ├── page.tsx            # Ticket list — calls GET /api/v1/tickets
-│   │   └── [id]/page.tsx       # Full ticket detail + status toggle (Close/Reopen)
+│   │   └── [id]/page.tsx       # Full ticket detail + status toggle (Close/Reopen) + taxonomy card
 │   └── api/
 │       └── v1/[...path]/
 │           └── route.ts        # BFF proxy — forwards all /api/v1/* to Railway
@@ -76,6 +76,7 @@ Requests hit the Next.js BFF proxy at `/api/v1/*`, which handles JWT forwarding 
 | Root Cause | |
 | Resolution | |
 | Cleaned Text | NLP-cleaned version of the description |
+| Taxonomies | Card below the main ticket card; grouped by type (Business, Application, Root Cause, Resolution); each level shown as labeled fields (e.g. "Business L1", "Business L2", "Business L3"); fetched from `GET /api/v1/taxonomies/tickets/{id}` |
 
 The **Close/Reopen** button calls `PATCH /api/v1/tickets/{id}/status` and updates local state on success. Back link goes to `/dashboard` (not `/tickets`).
 
