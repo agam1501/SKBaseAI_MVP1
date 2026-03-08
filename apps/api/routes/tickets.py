@@ -2,7 +2,7 @@ import csv
 import io
 import uuid
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from sqlalchemy import select
@@ -113,6 +113,7 @@ def _row_to_payload(row: dict[str, str]) -> tuple[dict | None, str | None]:
 @router.post("/tickets/upload", response_model=TicketUploadResult, status_code=201)
 async def upload_tickets_csv(
     file: UploadFile = File(..., description="CSV file with ticket rows"),
+    is_test: bool = Query(False, description="Mark all uploaded tickets as test data"),
     db: AsyncSession = Depends(get_db),
     client_id: uuid.UUID = Depends(get_effective_client_id),
 ):
@@ -142,7 +143,9 @@ async def upload_tickets_csv(
             err_msg = e.errors()[0].get("msg", str(e)) if e.errors() else str(e)
             errors.append(TicketUploadRowError(row=row_index, message=err_msg))
             continue
-        tickets_to_add.append(Ticket(client_id=client_id, **body.model_dump()))
+        data = body.model_dump()
+        data["is_test"] = is_test
+        tickets_to_add.append(Ticket(client_id=client_id, **data))
     if not tickets_to_add:
         result = TicketUploadResult(created=0, errors=errors)
         return JSONResponse(content=result.model_dump(), status_code=422)
@@ -157,12 +160,14 @@ async def upload_tickets_csv(
 
 @router.get("/tickets", response_model=list[TicketRead])
 async def list_tickets(
+    is_test: bool | None = Query(None, description="Filter by test data flag"),
     db: AsyncSession = Depends(get_db),
     client_id: uuid.UUID = Depends(get_effective_client_id),
 ):
-    result = await db.execute(
-        select(Ticket).where(Ticket.client_id == client_id).order_by(Ticket.created_at.desc())
-    )
+    stmt = select(Ticket).where(Ticket.client_id == client_id)
+    if is_test is not None:
+        stmt = stmt.where(Ticket.is_test == is_test)
+    result = await db.execute(stmt.order_by(Ticket.created_at.desc()))
     return result.scalars().all()
 
 

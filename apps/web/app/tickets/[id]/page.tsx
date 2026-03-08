@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { ReactNode } from "react";
 
@@ -23,6 +24,7 @@ type Ticket = {
   status: string | null;
   priority: string | null;
   is_resolved: boolean;
+  is_test: boolean;
   created_at: string;
   updated_at: string;
   resolved_at: string | null;
@@ -117,7 +119,17 @@ export default function TicketDetailPage() {
 
         <Card>
           <CardHeader>
-            <h1 className="text-xl font-bold">{ticket.short_desc}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold">{ticket.short_desc}</h1>
+              {ticket.is_test && (
+                <Badge
+                  variant="outline"
+                  className="text-xs border-amber-400 text-amber-600"
+                >
+                  TEST
+                </Badge>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
