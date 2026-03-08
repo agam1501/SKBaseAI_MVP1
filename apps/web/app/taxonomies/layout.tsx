@@ -23,12 +23,6 @@ export default function TaxonomiesLayout({
     <div className="min-h-screen p-8">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center gap-4 flex-wrap">
-          <Link
-            href="/dashboard"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            ← Back
-          </Link>
           <h1 className="text-2xl font-bold">Taxonomies</h1>
           <nav className="flex items-center gap-1 flex-wrap">
             {nav.map(({ href, label }) => (

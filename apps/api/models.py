@@ -43,7 +43,13 @@ class UserRoles(Base):
 
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
     role: Mapped[UserRole] = mapped_column(
-        Enum(UserRole, name="user_role_enum", create_type=False), nullable=False
+        Enum(
+            UserRole,
+            name="user_role_enum",
+            create_type=False,
+            values_callable=lambda obj: [e.value for e in obj],
+        ),
+        nullable=False,
     )
 
 

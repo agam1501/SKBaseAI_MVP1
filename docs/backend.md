@@ -18,7 +18,8 @@ apps/api/
 ├── models.py        # SQLAlchemy ORM models matching Supabase schema
 ├── schemas.py       # Pydantic request/response models
 ├── routes/
-│   ├── tickets.py   # POST /tickets, GET /tickets, GET /tickets/{id}, PATCH /tickets/{id}/status
+│   ├── clients.py   # GET /me/role, GET /clients, POST /clients, POST /clients/{id}/join
+│   ├── tickets.py   # POST /tickets, GET /tickets, GET /tickets/{id}, PATCH /tickets/{id}/status, POST /tickets/upload
 │   ├── proposals.py # GET /proposals/tickets/{id}/latest, POST /proposals/{id}/feedback
 │   └── taxonomies.py# GET /taxonomies/tickets/{id}, GET /taxonomies/business-category, /application, /resolution, /root-cause
 └── services/
@@ -51,6 +52,27 @@ cd apps/api
 python -m venv .venv && .venv/bin/pip install -e .
 .venv/bin/uvicorn main:app --reload
 ```
+
+## Model Notes
+
+### UserRole enum mapping
+`UserRole` is a Python `str` enum with capitalised values (`"Admin"`, `"Responder"`, `"Developer"`) matching the Postgres `user_role_enum` type. SQLAlchemy defaults to mapping by enum member *name* (lowercase), which causes a `LookupError` when reading rows. The `UserRoles.role` column uses `values_callable=lambda obj: [e.value for e in obj]` to force mapping by *value* instead:
+
+```python
+role: Mapped[UserRole] = mapped_column(
+    Enum(UserRole, name="user_role_enum", create_type=False,
+         values_callable=lambda obj: [e.value for e in obj]),
+    nullable=False,
+)
+```
+
+## User / Role Endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/me/role` | Returns the authenticated user's role (`Admin`, `Responder`, `Developer`); 404 if no role assigned |
+
+Role is stored in `public.user_roles` (`user_id`, `role` enum). The ingestion page uses this endpoint to gate access to Admin and Developer roles only.
 
 ## Ticket Endpoints
 

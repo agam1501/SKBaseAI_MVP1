@@ -21,6 +21,29 @@ When ticket counts per client grow into the thousands, move filtering to the bac
 - Ticket counts exceed ~500 per client
 - Users report slow search/filter interactions
 
+## Role enforcement is UI-only (backend enforcement needed)
+
+The sidebar and ingestion page perform role checks client-side via `GET /api/v1/me/role`. This means:
+
+- A Responder who knows the URL can still navigate to `/ingestion` directly in the browser
+- More critically, anyone with a valid JWT can call `POST /api/v1/tickets/upload` directly (e.g. via curl) regardless of their role
+
+**Endpoints that need backend role enforcement:**
+
+| Endpoint | Required role |
+|---|---|
+| `POST /tickets/upload` | Admin, Developer |
+| `POST /clients` | Admin |
+| `POST /clients/{id}/join` | Admin |
+
+**How to add it (FastAPI):**
+
+1. Create a `require_role(allowed: list[str])` dependency in `apps/api/dependencies.py` that reads the user's role from the DB and raises `HTTP 403` if not allowed
+2. Apply it to each endpoint: `Depends(require_role(["Admin", "Developer"]))`
+3. The existing `GET /api/v1/me/role` endpoint can share the same lookup logic
+
+Until then, role enforcement is a UX convenience only.
+
 ## Taxonomy fields fetched but not yet displayed
 
 Columns in `ticket_taxonomies` fetched by the frontend but intentionally not shown in the UI:

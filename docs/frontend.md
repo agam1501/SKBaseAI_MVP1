@@ -12,10 +12,15 @@
 apps/web/
 ├── middleware.ts               # Session cookie refresh + auth redirect guard
 ├── app/
-│   ├── layout.tsx              # Root layout, Tailwind globals
+│   ├── layout.tsx              # Root layout — wraps children in ClientProvider + AppShell
 │   ├── page.tsx                # Redirects / → /dashboard
 │   ├── login/page.tsx          # Email/password sign in + sign up
 │   ├── dashboard/page.tsx      # Ticket table with search, sort, filter, clickable rows
+│   ├── ingestion/
+│   │   └── page.tsx            # CSV upload + history placeholder; Admin/Developer only
+│   ├── taxonomies/
+│   │   ├── layout.tsx          # Sub-nav tabs (Overview, Business category, Application, Resolution, Root cause)
+│   │   └── ...                 # Individual taxonomy pages
 │   ├── tickets/
 │   │   ├── page.tsx            # Ticket list — calls GET /api/v1/tickets
 │   │   └── [id]/page.tsx       # Full ticket detail + status toggle (Close/Reopen) + taxonomy card
@@ -23,9 +28,17 @@ apps/web/
 │       └── v1/[...path]/
 │           └── route.ts        # BFF proxy — forwards all /api/v1/* to Railway
 ├── components/
-│   └── ProposalCard.tsx        # Accept/reject proposal UI
+│   ├── AppShell.tsx            # Layout wrapper: sidebar + top navbar (skipped on /login)
+│   ├── AppSidebar.tsx          # Collapsible left sidebar with role-gated nav items + drag-to-resize
+│   ├── TopNav.tsx              # Persistent top bar: client selector, user email, sign-out
+│   ├── ProposalCard.tsx        # Accept/reject proposal UI
+│   └── ui/                     # shadcn components
+├── contexts/
+│   └── ClientContext.tsx       # Client list + selected client state (persisted in localStorage)
+├── hooks/
+│   └── use-mobile.tsx          # Detects mobile viewport (used by shadcn sidebar)
 ├── lib/
-│   ├── supabase.ts             # createBrowserClient() — for login page only
+│   ├── supabase.ts             # createBrowserClient() — for client components
 │   ├── supabase-server.ts      # createServerClient() — reads cookies in API routes
 │   └── api-client.ts           # Typed fetch wrapper (relative URLs, no token param)
 ├── package.json                # deps + scripts using dotenv-cli for local
@@ -54,6 +67,29 @@ apiClient.patch<Ticket>("/api/v1/tickets/{id}/status", { status, is_resolved })
 
 Requests hit the Next.js BFF proxy at `/api/v1/*`, which handles JWT forwarding to Railway.
 
+## Navigation (AppShell)
+
+All pages except `/login` are wrapped in `AppShell`, which renders:
+
+### Sidebar (`AppSidebar`)
+- Collapsible to an icon-only rail (shadcn `collapsible="icon"`)
+- Drag-to-resize: a 4px handle on the right edge lets users drag width between 160–480px; hidden when collapsed
+- Collapse toggle (`SidebarTrigger`) in the footer, right-aligned
+- Role-gated nav items — fetched on mount from `GET /api/v1/me/role`:
+
+| Item | Route | Visible to |
+|---|---|---|
+| Dashboard | `/dashboard` | All roles |
+| Taxonomies | `/taxonomies` | All roles |
+| Ingestion | `/ingestion` | Admin, Developer |
+
+While the role is loading or if the endpoint fails, all items are shown (fail-open). Once role resolves to `Responder`, Ingestion is hidden.
+
+### Top Navbar (`TopNav`)
+- **Client selector** — shadcn `Select` backed by `ClientContext`; switches the active client on any page
+- **User email** — displayed on the right (hidden on small screens)
+- **Sign out** — calls `supabase.auth.signOut()` and redirects to `/login`
+
 ## Dashboard — Ticket Table
 
 `app/dashboard/page.tsx` is the main post-login view. Features:
@@ -61,6 +97,7 @@ Requests hit the Next.js BFF proxy at `/api/v1/*`, which handles JWT forwarding 
 - **Power search / filter builder** — choose a field, operator, and value; multiple filters are ANDed
 - **Column sorting** — click column headers (External ID, Short Desc, Status, Created) to toggle asc/desc
 - **Clickable rows** — each `<tr>` has `cursor-pointer` + `onClick` → navigates to `/tickets/{id}`
+- **Show test data toggle** — checkbox to include/exclude tickets marked `is_test`; hidden when no tickets loaded
 
 ## Ticket Detail Page
 
@@ -79,6 +116,17 @@ Requests hit the Next.js BFF proxy at `/api/v1/*`, which handles JWT forwarding 
 | Taxonomies | Card below the main ticket card; grouped by type (Business, Application, Root Cause, Resolution); each level shown as labeled fields (e.g. "Business L1", "Business L2", "Business L3"); fetched from `GET /api/v1/taxonomies/tickets/{id}` |
 
 The **Close/Reopen** button calls `PATCH /api/v1/tickets/{id}/status` and updates local state on success. Back link goes to `/dashboard` (not `/tickets`).
+
+## Ingestion Page
+
+`app/ingestion/page.tsx` is gated to **Admin** and **Developer** roles only. On load it calls `GET /api/v1/me/role`; if the role is `Responder` or no role is assigned, the user is redirected to `/dashboard`.
+
+| Section | Description |
+|---|---|
+| Upload Tickets (CSV) | File picker + upload button; calls `POST /api/v1/tickets/upload`; shows created count and row-level errors |
+| Ingestion History | Placeholder — run-level history will appear here once job tracking is added to the backend |
+
+The old `/upload_tickets` route now redirects to `/ingestion` to preserve any existing bookmarks.
 
 ## Middleware
 
