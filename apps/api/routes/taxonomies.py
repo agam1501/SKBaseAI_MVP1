@@ -14,6 +14,7 @@ from models import (
     TicketTaxonomy,
     UserClient,
 )
+from routes.tickets import get_effective_client_id
 from schemas import (
     TaxonomyApplicationRead,
     TaxonomyBusinessCategoryRead,
@@ -56,10 +57,13 @@ async def get_optional_client_id(
 async def get_ticket_taxonomies(
     ticket_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
+    client_id: uuid.UUID = Depends(get_effective_client_id),
 ):
     result = await db.execute(
         select(TicketTaxonomy).where(
-            TicketTaxonomy.ticket_id == ticket_id, TicketTaxonomy.is_active
+            TicketTaxonomy.ticket_id == ticket_id,
+            TicketTaxonomy.client_id == client_id,
+            TicketTaxonomy.is_active,
         )
     )
     return result.scalars().all()
