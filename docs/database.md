@@ -79,6 +79,7 @@ Core ticket data ingested from source systems.
 | status | enum | `OPEN` or `CLOSED` |
 | priority | text | |
 | is_resolved | bool | gates vector search candidates |
+| is_test | bool | `false` by default — marks test/dev data for filtering |
 | created_at / updated_at | timestamptz | |
 
 ### ticket_embeddings

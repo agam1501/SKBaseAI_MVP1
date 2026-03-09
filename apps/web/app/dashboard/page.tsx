@@ -41,6 +41,7 @@ type Ticket = {
   status: string | null;
   priority: string | null;
   is_resolved: boolean;
+  is_test: boolean;
   created_at: string;
 };
 
@@ -291,6 +292,7 @@ export default function DashboardPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketsError, setTicketsError] = useState<string | null>(null);
   const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [showTestData, setShowTestData] = useState(false);
   const [filters, setFilters] = useState<Filter[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortColumn, setSortColumn] = useState<SortColumn>("created_at");
@@ -378,7 +380,7 @@ export default function DashboardPage() {
   }
 
   const filteredTickets = useMemo(() => {
-    let result = tickets;
+    let result = showTestData ? tickets : tickets.filter((t) => !t.is_test);
 
     for (const filter of filters) {
       result = result.filter((ticket) => {
@@ -436,7 +438,7 @@ export default function DashboardPage() {
     });
 
     return result;
-  }, [tickets, filters, sortColumn, sortDirection]);
+  }, [tickets, showTestData, filters, sortColumn, sortDirection]);
 
   function SortIcon({ column }: { column: SortColumn }) {
     if (sortColumn !== column)
@@ -524,6 +526,15 @@ export default function DashboardPage() {
             {/* Power Search Filter Bar */}
             {!ticketsLoading && tickets.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
+                <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer mr-2">
+                  <input
+                    type="checkbox"
+                    checked={showTestData}
+                    onChange={(e) => setShowTestData(e.target.checked)}
+                    className="h-3.5 w-3.5 rounded border-gray-300"
+                  />
+                  Show test data
+                </label>
                 <Popover open={filterOpen} onOpenChange={setFilterOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -590,6 +601,12 @@ export default function DashboardPage() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
+                        {showTestData && (
+                          <th
+                            scope="col"
+                            className="w-0 px-2 py-3"
+                          />
+                        )}
                         <th
                           scope="col"
                           className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer select-none hover:text-gray-900"
@@ -637,6 +654,18 @@ export default function DashboardPage() {
                           className="hover:bg-gray-50 cursor-pointer"
                           onClick={() => router.push(`/tickets/${t.ticket_id}`)}
                         >
+                          {showTestData && (
+                            <td className="px-2 py-3 whitespace-nowrap">
+                              {t.is_test && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-[10px] px-1 py-0 border-amber-400 text-amber-600"
+                                >
+                                  TEST
+                                </Badge>
+                              )}
+                            </td>
+                          )}
                           <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                             {t.external_id ?? "—"}
                           </td>
