@@ -3,17 +3,8 @@
 import { useClientContext } from "@/contexts/ClientContext";
 import { apiClient } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,8 +22,6 @@ import {
   ChevronLeft,
   X,
 } from "lucide-react";
-
-const EMPTY_CLIENT_VALUE = "__none__";
 
 type Ticket = {
   ticket_id: string;
@@ -281,14 +270,9 @@ export default function DashboardPage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const {
-    clients,
     selectedClient,
-    setSelectedClient,
-    loadClients,
-    loading,
     error,
   } = useClientContext();
-  const [email, setEmail] = useState<string | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketsError, setTicketsError] = useState<string | null>(null);
   const [ticketsLoading, setTicketsLoading] = useState(false);
@@ -302,14 +286,9 @@ export default function DashboardPage() {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
         router.push("/login");
-        return;
-      }
-      setEmail(data.session.user?.email ?? null);
-      if (data.session.access_token) {
-        loadClients(data.session.access_token);
       }
     });
-  }, [supabase, loadClients, router]);
+  }, [supabase, router]);
 
   const loadTickets = useCallback(async () => {
     if (!selectedClient) {
@@ -339,20 +318,6 @@ export default function DashboardPage() {
   useEffect(() => {
     loadTickets();
   }, [loadTickets]);
-
-  async function signOut() {
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
-
-  function handleClientChange(value: string) {
-    if (value === EMPTY_CLIENT_VALUE) {
-      setSelectedClient(null);
-    } else {
-      const client = clients.find((c) => c.client_id === value) ?? null;
-      setSelectedClient(client);
-    }
-  }
 
   function getTicketStatus(t: Ticket): string {
     return t.status ?? (t.is_resolved ? "CLOSED" : "OPEN");
@@ -453,72 +418,15 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <h1 className="text-2xl font-bold">Home</h1>
-          <div className="flex items-center gap-4 flex-wrap">
-            <span className="text-sm text-muted-foreground">{email}</span>
-            <Button
-              variant="link"
-              onClick={signOut}
-              className="text-sm p-0 h-auto"
-            >
-              Sign out
-            </Button>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label
-            htmlFor="dashboard-client-select"
-            className="text-sm font-medium text-muted-foreground"
-          >
-            Client
-          </Label>
-          {loading ? (
-            <span className="text-sm text-muted-foreground block">
-              Loading clients…
-            </span>
-          ) : (
-            <Select
-              value={selectedClient?.client_id ?? EMPTY_CLIENT_VALUE}
-              onValueChange={handleClientChange}
-            >
-              <SelectTrigger
-                id="dashboard-client-select"
-                className="min-w-[160px] w-[160px]"
-              >
-                <SelectValue placeholder="Select client…" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={EMPTY_CLIENT_VALUE}>
-                  Select client…
-                </SelectItem>
-                {clients.map((c) => (
-                  <SelectItem key={c.client_id} value={c.client_id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
+        <h1 className="text-2xl font-bold">Home</h1>
 
         {error && <p className="text-destructive text-sm">{error}</p>}
 
         {selectedClient ? (
           <div className="mt-10 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                Tickets for {selectedClient.name}
-              </h2>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" asChild>
-                  <Link href="/taxonomies">Taxonomies</Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/upload_tickets">Upload</Link>
-                </Button>
-              </div>
-            </div>
+            <h2 className="text-lg font-semibold">
+              Tickets for {selectedClient.name}
+            </h2>
             {ticketsError && (
               <p className="text-destructive text-sm">{ticketsError}</p>
             )}

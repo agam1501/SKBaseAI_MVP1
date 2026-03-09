@@ -7,10 +7,24 @@ from sqlalchemy.sql import func
 
 from config import settings
 from db import get_db
-from models import Client, UserClient
-from schemas import ClientCreate, ClientRead
+from models import Client, UserClient, UserRoles
+from schemas import ClientCreate, ClientRead, UserRoleRead
 
 router = APIRouter(tags=["clients"])
+
+
+@router.get("/me/role", response_model=UserRoleRead)
+async def get_my_role(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Return the role of the currently authenticated user."""
+    user_id = _user_id(request)
+    result = await db.execute(select(UserRoles).where(UserRoles.user_id == user_id))
+    row = result.scalar_one_or_none()
+    if row is None:
+        raise HTTPException(status_code=404, detail="No role assigned to this user")
+    return row
 
 
 def _user_id(request: Request) -> uuid.UUID:
