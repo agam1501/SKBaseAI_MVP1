@@ -2,24 +2,12 @@
 
 import json
 import uuid
-from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-# Add parent dir to path so imports work
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 from models import Ticket, TicketTaxonomy
-from services.taxonomy_predictor import (
-    TAXONOMY_CONFIGS,
-    TaxonomyPredictor,
-    TaxonomyTypeConfig,
-)
-
+from services.taxonomy_predictor import TAXONOMY_CONFIGS, TaxonomyPredictor
 
 # --- Fixtures ---
 
@@ -207,8 +195,6 @@ class TestPredictSingleTaxonomy:
         # Mock DB session
         mock_db = AsyncMock()
 
-        # Track which level we're on based on call count
-        call_count = 0
         l1_options = [{"value": "Infrastructure"}]
         l2_options = [{"value": "Network"}]
         l3_options = [{"value": "VPN"}]
@@ -281,8 +267,6 @@ class TestPredictSingleTaxonomy:
         mock_openai_client.chat.completions.create = AsyncMock(
             return_value=_make_llm_response("Infrastructure", 0.9)
         )
-
-        call_count = [0]
 
         async def mock_get_options(db, config, level, client_id, filters):
             if level == "l1":
