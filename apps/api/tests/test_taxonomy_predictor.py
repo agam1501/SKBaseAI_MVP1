@@ -19,7 +19,9 @@ def sample_ticket():
     ticket.ticket_id = uuid.uuid4()
     ticket.client_id = uuid.uuid4()
     ticket.short_desc = "VPN not connecting after Windows update"
-    ticket.full_desc = "User reports VPN client fails to establish connection after latest Windows patch."
+    ticket.full_desc = (
+        "User reports VPN client fails to establish connection after latest Windows patch."
+    )
     ticket.cleaned_text = None
     ticket.resolution = "Reinstalled VPN client and updated network drivers."
     ticket.root_cause = "Windows update broke network adapter configuration."
@@ -166,9 +168,7 @@ class TestPredictLevel:
         assert schema["properties"]["selected_value"]["enum"] == ["Hardware", "Software"]
 
     @pytest.mark.asyncio
-    async def test_includes_prior_predictions_in_prompt(
-        self, mock_openai_client, biz_cat_config
-    ):
+    async def test_includes_prior_predictions_in_prompt(self, mock_openai_client, biz_cat_config):
         mock_openai_client.chat.completions.create = AsyncMock(
             return_value=_make_llm_response("Laptop Issues", 0.8)
         )
@@ -302,9 +302,7 @@ class TestPredictForTicket:
         assert len(results) == 4
         assert mock_predict.call_count == 4
         # Verify all 4 configs were used
-        called_types = [
-            call.args[3].taxonomy_type for call in mock_predict.call_args_list
-        ]
+        called_types = [call.args[3].taxonomy_type for call in mock_predict.call_args_list]
         assert set(called_types) == {
             "business_category",
             "application",

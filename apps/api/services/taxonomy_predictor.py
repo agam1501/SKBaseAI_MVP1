@@ -111,9 +111,7 @@ class TaxonomyPredictor:
         self._client = client or get_client()
         self._model = settings.llm_model
 
-    async def predict_for_ticket(
-        self, db: AsyncSession, ticket: Ticket
-    ) -> list[TicketTaxonomy]:
+    async def predict_for_ticket(self, db: AsyncSession, ticket: Ticket) -> list[TicketTaxonomy]:
         """Predict all 4 taxonomy types for a ticket. Runs types in parallel."""
         ticket_text = self._build_ticket_text(ticket)
 
@@ -170,15 +168,11 @@ class TaxonomyPredictor:
             logger.warning("No L1 options for %s — skipping", config.taxonomy_type)
             return None
 
-        l1_result = await self._predict_level(
-            ticket_text, config, "l1", l1_options, {}
-        )
+        l1_result = await self._predict_level(ticket_text, config, "l1", l1_options, {})
         l1_value = l1_result["selected_value"]
 
         # --- L2 ---
-        l2_options = await self._get_level_options(
-            db, config, "l2", client_id, {"l1": l1_value}
-        )
+        l2_options = await self._get_level_options(db, config, "l2", client_id, {"l1": l1_value})
         if not l2_options:
             logger.warning(
                 "No L2 options for %s under L1=%s — skipping", config.taxonomy_type, l1_value
@@ -313,7 +307,11 @@ class TaxonomyPredictor:
             user_prompt_parts.append("## Already Classified\n" + "\n".join(context_lines))
 
         options_text = self._format_options_for_prompt(options, config)
-        level_label = {"l1": "L1 (top-level category)", "l2": "L2 (subcategory)", "l3": "L3 (specific classification)"}[level]
+        level_label = {
+            "l1": "L1 (top-level category)",
+            "l2": "L2 (subcategory)",
+            "l3": "L3 (specific classification)",
+        }[level]
         user_prompt_parts.append(
             f"## Task\nSelect the best {level_label} for the {config.type_label} taxonomy.\n\n"
             f"## Options\n{options_text}"
