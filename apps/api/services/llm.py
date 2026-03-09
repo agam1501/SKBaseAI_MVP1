@@ -2,6 +2,7 @@
 # Requires OPENAI_API_KEY to be set in .env
 
 from openai import AsyncOpenAI
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
 
@@ -15,10 +16,15 @@ def get_client() -> AsyncOpenAI:
     return _client
 
 
-async def extract_taxonomies(text: str) -> dict:
-    """Extract category/subcategory/tags from ticket text via LLM."""
-    # TODO: implement in Phase 2
-    raise NotImplementedError("LLM services not yet implemented")
+async def extract_taxonomies(db: AsyncSession, ticket) -> list:
+    """Predict L1/L2/L3 taxonomy classifications for a ticket via LLM.
+
+    Returns a list of TicketTaxonomy ORM instances (one per taxonomy type).
+    """
+    from services.taxonomy_predictor import TaxonomyPredictor
+
+    predictor = TaxonomyPredictor(client=get_client())
+    return await predictor.predict_for_ticket(db, ticket)
 
 
 async def generate_proposal(ticket_text: str, similar_tickets: list[dict]) -> str:
