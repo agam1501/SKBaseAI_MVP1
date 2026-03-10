@@ -21,7 +21,10 @@ async def business_application_cross_tab(
     # 1. All distinct business L1s from taxonomy reference table
     biz_result = await db.execute(
         select(TaxonomyBusinessCategory.l1.distinct()).where(
-            or_(TaxonomyBusinessCategory.client_id.is_(None), TaxonomyBusinessCategory.client_id == client_id),
+            or_(
+                TaxonomyBusinessCategory.client_id.is_(None),
+                TaxonomyBusinessCategory.client_id == client_id,
+            ),
             TaxonomyBusinessCategory.is_active == True,  # noqa: E712
         )
     )
@@ -30,7 +33,9 @@ async def business_application_cross_tab(
     # 2. All distinct application L1s from taxonomy reference table
     app_result = await db.execute(
         select(TaxonomyApplication.l1.distinct()).where(
-            or_(TaxonomyApplication.client_id.is_(None), TaxonomyApplication.client_id == client_id),
+            or_(
+                TaxonomyApplication.client_id.is_(None), TaxonomyApplication.client_id == client_id
+            ),
             TaxonomyApplication.is_active == True,  # noqa: E712
         )
     )
