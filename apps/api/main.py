@@ -43,7 +43,7 @@ _logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup():
-    """Fetch Supabase public keys and validate Pydantic/ORM schema alignment."""
+    """Fetch Supabase public keys, init ARQ pool, validate schema alignment."""
     _logger.info("=== CONFIG DEBUG ===")
     _logger.info("SITE_URL env var: %s", os.environ.get("SITE_URL", "NOT SET"))
     _logger.info("settings.site_url: %s", settings.site_url)
@@ -54,11 +54,27 @@ async def startup():
         resp.raise_for_status()
         app.state.jwks = resp.json().get("keys", [])
 
+    # Initialize ARQ connection pool for background job enqueuing (non-fatal if Redis unavailable)
+    try:
+        from arq_pool import get_arq_pool
+
+        app.state.arq_pool = await get_arq_pool()
+    except Exception:
+        _logger.warning("ARQ pool init failed — enrichment will not work", exc_info=True)
+
     _assert_schema_subset(Ticket, TicketRead)
     _assert_schema_subset(TicketProposal, ProposalRead)
     _assert_schema_subset(TicketProposalFeedback, FeedbackRead)
     _assert_schema_subset(TicketTaxonomy, TaxonomyRead)
     _assert_schema_subset(UserRoles, UserRoleRead)
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    """Close ARQ connection pool."""
+    from arq_pool import close_arq_pool
+
+    await close_arq_pool()
 
 
 async def get_current_user(

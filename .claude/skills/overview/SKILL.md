@@ -15,7 +15,7 @@ AI-powered IT ticket resolution. Ingests support tickets, enriches them with emb
 | Frontend | Next.js 14 | Vercel |
 | Backend API | FastAPI (Python) | Railway |
 | Database | Supabase (Postgres + pgvector) | Supabase |
-| Job Queue | ARQ + Redis | Railway (Phase 3) |
+| Job Queue | ARQ + Redis | Railway |
 
 ## Request Flow
 
@@ -27,8 +27,8 @@ Browser
     → Next.js /api/v1/*  (BFF proxy — reads cookie, forwards JWT to Railway)
       → Railway (FastAPI)  (JWT verified server-to-server, DB queried)
         → Supabase Postgres  (data read/write)
-        → Redis / ARQ Worker  (async enrichment — Phase 3)
-          → OpenAI API  (embeddings + LLM — Phase 3)
+        → Redis / ARQ Worker  (async enrichment)
+          → OpenAI API  (taxonomy prediction + future embeddings)
 ```
 
 > Browser never calls Railway directly. See `.claude/skills/auth-bff/SKILL.md` for the full auth and proxy flow.
@@ -38,8 +38,9 @@ Browser
 | Phase | Description | Status |
 |---|---|---|
 | 1 | Infrastructure skeleton (auth, backend, frontend, deploy) | ✅ Done |
-| 2 | Enrichment pipeline (embeddings, taxonomy, proposals) | 🔜 Next |
-| 3 | Worker / queue (ARQ + Redis) | 🔜 Later |
+| 2a | Taxonomy prediction (LLM-powered L1/L2/L3 classification) | ✅ Done |
+| 2a+ | Enrichment pipeline (ARQ + Redis background processing) | ✅ Done |
+| 2b | Embeddings + vector search + proposal generation | 🔜 Next |
 
 ## Key Technical Decisions
 
@@ -47,3 +48,5 @@ Browser
 - **ES256 JWT verification**: Supabase now signs tokens with ECC (P-256). Backend fetches public keys from Supabase JWKS endpoint on startup.
 - **ARQ over Celery**: Fully async worker for OpenAI calls; supports task chaining via `ctx["redis"]`.
 - **is_active=False for taxonomy overwrites**: Preserves audit trail without deletes.
+- **Cascading taxonomy prediction**: L1 → L2 → L3 narrowing with dynamic enum constraints; 4 types in parallel. See [docs/taxonomy-prediction.md](./taxonomy-prediction.md).
+- **Async enrichment pipeline**: ARQ + Redis for background taxonomy prediction on ticket ingestion. See [docs/enrichment-pipeline.md](./enrichment-pipeline.md).
