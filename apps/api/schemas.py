@@ -218,3 +218,18 @@ class TaxonomyRootCauseRead(BaseModel):
     examples: str | None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# --- Analytics ---
+
+
+class CrossTabRow(BaseModel):
+    business_l1: str
+    application_l1: str
+    count: int
+
+
+class CrossTabMatrix(BaseModel):
+    business_l1s: list[str]
+    application_l1s: list[str]
+    counts: list[CrossTabRow]

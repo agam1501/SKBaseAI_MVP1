@@ -3,6 +3,18 @@ const API_URL = "";
 
 export type ApiOptions = { clientId?: string | null };
 
+export type CrossTabRow = {
+  business_l1: string;
+  application_l1: string;
+  count: number;
+};
+
+export type CrossTabMatrix = {
+  business_l1s: string[];
+  application_l1s: string[];
+  counts: CrossTabRow[];
+};
+
 export type TicketUploadRowError = { row: number; message: string };
 export type TicketUploadResult = {
   created: number;

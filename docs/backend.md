@@ -18,6 +18,7 @@ apps/api/
 ├── models.py        # SQLAlchemy ORM models matching Supabase schema
 ├── schemas.py       # Pydantic request/response models
 ├── routes/
+│   ├── analytics.py # GET /analytics/cross-tab/business-application
 │   ├── clients.py   # GET /me/role, GET /clients, POST /clients, POST /clients/{id}/join
 │   ├── tickets.py   # POST /tickets, GET /tickets, GET /tickets/{id}, PATCH /tickets/{id}/status, POST /tickets/upload
 │   ├── proposals.py # GET /proposals/tickets/{id}/latest, POST /proposals/{id}/feedback
@@ -103,6 +104,32 @@ Tickets can be marked as test data to isolate them from production views.
 - **List** (`GET /tickets?is_test=false`): filter by test flag — omit the param to return all tickets
 - **Frontend**: dashboard has a "Show test data" toggle (default off); test tickets show a TEST badge; upload page has a "Mark as test data" checkbox
 
+## Analytics Endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/analytics/cross-tab/business-application` | Returns a full Business L1 × Application L1 cross-tab matrix |
+
+### Cross-tab matrix (`CrossTabMatrix`)
+
+Response shape:
+
+```json
+{
+  "business_l1s": ["Functional", "Technical", ...],
+  "application_l1s": ["SAP-S/4HANA", "ServiceNow", ...],
+  "counts": [
+    { "business_l1": "Functional", "application_l1": "SAP-S/4HANA", "count": 8 }
+  ]
+}
+```
+
+- `business_l1s` and `application_l1s` are **all** distinct L1 values from the taxonomy reference tables (`taxonomy_business_category` and `taxonomy_application`), filtered by `client_id IS NULL OR client_id = <current client>` and `is_active = true`. This ensures every category appears as a row/column even when no tickets have been assigned to it.
+- `counts` is the sparse list of non-zero (business_l1, application_l1, count) pairs — only cells with at least one ticket are included.
+- The frontend is responsible for filling in zeros for pairs absent from `counts`.
+
+---
+
 ## Health Endpoints
 
 | Endpoint | What it checks |
@@ -124,6 +151,8 @@ Tickets can be marked as test data to isolate them from production views.
 | `TaxonomyApplicationRead` | `TaxonomyApplication` | GET /taxonomies/application |
 | `TaxonomyResolutionRead` | `TaxonomyResolution` | GET /taxonomies/resolution |
 | `TaxonomyRootCauseRead` | `TaxonomyRootCause` | GET /taxonomies/root-cause |
+| `CrossTabRow` | — | One non-zero cell in the cross-tab matrix |
+| `CrossTabMatrix` | — | Full response for `GET /analytics/cross-tab/business-application` |
 
 All taxonomy reference schemas include: `id`, `client_id`, hierarchy fields (e.g. `l1`, `l2`, `l3` or `l1_outcome`/`l2_action_type`/`l3_resolution_code`), `is_active`, `created_at`, `updated_at`, plus type-specific fields (e.g. `node`, `label`, `keywords` for business category; `resolution_code`, `definition` for resolution). See `apps/api/schemas.py` and `apps/api/models.py` for full field lists.
 
