@@ -15,6 +15,7 @@ apps/web/
 │   ├── layout.tsx              # Root layout — wraps children in ClientProvider + AppShell
 │   ├── page.tsx                # Redirects / → /dashboard
 │   ├── login/page.tsx          # Email/password sign in + sign up
+│   ├── overview/page.tsx       # Cross-tab matrix: Application L1 (rows) × Business L1 (columns)
 │   ├── dashboard/page.tsx      # Ticket table with search, sort, filter, clickable rows
 │   ├── ingestion/
 │   │   └── page.tsx            # CSV upload + history placeholder; Admin/Developer only
@@ -79,6 +80,7 @@ All pages except `/login` are wrapped in `AppShell`, which renders:
 
 | Item | Route | Visible to |
 |---|---|---|
+| Overview | `/overview` | All roles |
 | Dashboard | `/dashboard` | All roles |
 | Taxonomies | `/taxonomies` | All roles |
 | Ingestion | `/ingestion` | Admin, Developer |
@@ -89,6 +91,44 @@ While the role is loading or if the endpoint fails, all items are shown (fail-op
 - **Client selector** — shadcn `Select` backed by `ClientContext`; switches the active client on any page
 - **User email** — displayed on the right (hidden on small screens)
 - **Sign out** — calls `supabase.auth.signOut()` and redirects to `/login`
+
+## Overview Page
+
+`app/overview/page.tsx` is the first page shown after login. It displays a cross-tab matrix of ticket counts broken down by **Application L1** (rows) × **Business L1** (columns).
+
+### Data source
+
+Calls `GET /api/v1/analytics/cross-tab/business-application` which returns a `CrossTabMatrix`:
+
+```json
+{
+  "business_l1s": ["Functional", "Technical", ...],
+  "application_l1s": ["SAP-S/4HANA", "ServiceNow", ...],
+  "counts": [{ "business_l1": "Functional", "application_l1": "SAP-S/4HANA", "count": 8 }, ...]
+}
+```
+
+The backend fetches **all L1 values from the taxonomy reference tables** (not just those with tickets), so every category always appears as a row/column — even if its count is zero.
+
+### Matrix behaviour
+
+- **Rows** = Application L1 values (all, from `taxonomy_application` reference table)
+- **Columns** = Business L1 values (all, from `taxonomy_business_category` reference table)
+- **Zero cells** are visually de-emphasised (`text-muted-foreground text-xs`)
+- **Non-zero cells** are highlighted (`bg-blue-50 font-medium`)
+- **Totals row** is sticky at the bottom of the scroll container
+- **Header row** is sticky at the top
+- **First column** (Application L1 label) is sticky left
+
+### Controls
+
+| Control | Behaviour |
+|---|---|
+| Application filter (text input) | Filters visible rows by substring match on Application L1 name; totals update live |
+| Vertical scroll | Table body scrolls within a `max-h-[480px]` container; header and totals row remain fixed |
+| Horizontal scroll | Outer container scrolls horizontally when columns overflow |
+
+---
 
 ## Dashboard — Ticket Table
 

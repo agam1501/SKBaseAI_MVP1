@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { LayoutDashboard, Tag, Upload } from "lucide-react";
+import { BarChart2, LayoutDashboard, Tag, Upload } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +27,7 @@ import {
 type UserRole = { role: "Admin" | "Responder" | "Developer" };
 
 const NAV_ITEMS = [
+  { label: "Overview", href: "/overview", icon: BarChart2, roles: null },
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: null },
   { label: "Taxonomies", href: "/taxonomies", icon: Tag, roles: null },
   { label: "Ingestion", href: "/ingestion", icon: Upload, roles: ["Admin", "Developer"] as UserRole["role"][] },
