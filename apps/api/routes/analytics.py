@@ -1,14 +1,14 @@
 import uuid
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import func, and_, select, or_
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from db import get_db
-from models import TicketTaxonomy, TaxonomyBusinessCategory, TaxonomyApplication
+from models import TaxonomyApplication, TaxonomyBusinessCategory, TicketTaxonomy
 from routes.tickets import get_effective_client_id
-from schemas import CrossTabRow, CrossTabMatrix
+from schemas import CrossTabMatrix, CrossTabRow
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
