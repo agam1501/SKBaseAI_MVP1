@@ -1,5 +1,6 @@
 import csv
 import io
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
@@ -8,9 +9,10 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from arq_pool import get_arq_pool
 from config import settings
 from db import get_db
-from models import Ticket, TicketStatus, UserClient
+from models import EnrichmentStatus, Ticket, TicketStatus, UserClient
 from schemas import (
     TicketCreate,
     TicketRead,
@@ -18,6 +20,8 @@ from schemas import (
     TicketUploadResult,
     TicketUploadRowError,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["tickets"])
 
@@ -62,10 +66,24 @@ async def create_ticket(
     db: AsyncSession = Depends(get_db),
     client_id: uuid.UUID = Depends(get_effective_client_id),
 ):
-    ticket = Ticket(client_id=client_id, **body.model_dump())
+    ticket = Ticket(
+        client_id=client_id,
+        enrichment_status=EnrichmentStatus.PENDING,
+        **body.model_dump(),
+    )
     db.add(ticket)
     await db.commit()
     await db.refresh(ticket)
+
+    # Enqueue background enrichment
+    try:
+        pool = await get_arq_pool()
+        await pool.enqueue_job("run_enrich_ticket", str(ticket.ticket_id))
+    except Exception:
+        logger.warning(
+            "Failed to enqueue enrichment for ticket %s", ticket.ticket_id, exc_info=True
+        )
+
     return ticket
 
 
@@ -145,7 +163,9 @@ async def upload_tickets_csv(
             continue
         data = body.model_dump()
         data["is_test"] = is_test
-        tickets_to_add.append(Ticket(client_id=client_id, **data))
+        tickets_to_add.append(
+            Ticket(client_id=client_id, enrichment_status=EnrichmentStatus.PENDING, **data)
+        )
     if not tickets_to_add:
         result = TicketUploadResult(created=0, errors=errors)
         return JSONResponse(content=result.model_dump(), status_code=422)
@@ -155,6 +175,15 @@ async def upload_tickets_csv(
     except Exception as exc:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Bulk insert failed: {exc}") from exc
+
+    # Enqueue background enrichment for each ticket
+    try:
+        pool = await get_arq_pool()
+        for t in tickets_to_add:
+            await pool.enqueue_job("run_enrich_ticket", str(t.ticket_id))
+    except Exception:
+        logger.warning("Failed to enqueue enrichment for uploaded tickets", exc_info=True)
+
     return TicketUploadResult(created=len(tickets_to_add), errors=errors)
 
 
@@ -203,4 +232,31 @@ async def update_ticket_status(
     ticket.is_resolved = body.is_resolved
     await db.commit()
     await db.refresh(ticket)
+    return ticket
+
+
+@router.post("/tickets/{ticket_id}/enrich", response_model=TicketRead)
+async def enrich_ticket(
+    ticket_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    client_id: uuid.UUID = Depends(get_effective_client_id),
+):
+    """Manually trigger (or re-trigger) enrichment for a ticket."""
+    result = await db.execute(
+        select(Ticket).where(Ticket.ticket_id == ticket_id, Ticket.client_id == client_id)
+    )
+    ticket = result.scalar_one_or_none()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    ticket.enrichment_status = EnrichmentStatus.PENDING
+    await db.commit()
+    await db.refresh(ticket)
+
+    try:
+        pool = await get_arq_pool()
+        await pool.enqueue_job("run_enrich_ticket", str(ticket.ticket_id))
+    except Exception:
+        logger.warning("Failed to enqueue enrichment for ticket %s", ticket_id, exc_info=True)
+
     return ticket
