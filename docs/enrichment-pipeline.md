@@ -160,6 +160,9 @@ The worker needs the same env vars as the API:
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Yes |
 | `SUPABASE_JWT_SECRET` | Yes | Yes (config requires it) |
 | `DEFAULT_CLIENT_ID` | Yes | Yes |
+| `ENABLE_ENRICHMENT` | Yes (API only) | No |
+
+`ENABLE_ENRICHMENT` (default `true`) is a kill switch for **automatic** enrichment on CSV upload. When `false`, CSV-uploaded tickets are still created with `enrichment_status=PENDING` but no ARQ jobs are enqueued. Manual enrichment via `POST /tickets/{id}/enrich` and single-ticket creation always enqueue regardless of this flag.
 
 On Railway, the worker's env vars are set using reference variables (e.g., `${{Redis.REDIS_URL}}`, `${{adventurous-fascination.DATABASE_URL}}`) so they stay in sync automatically.
 

@@ -176,13 +176,14 @@ async def upload_tickets_csv(
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Bulk insert failed: {exc}") from exc
 
-    # Enqueue background enrichment for each ticket
-    try:
-        pool = await get_arq_pool()
-        for t in tickets_to_add:
-            await pool.enqueue_job("run_enrich_ticket", str(t.ticket_id))
-    except Exception:
-        logger.warning("Failed to enqueue enrichment for uploaded tickets", exc_info=True)
+    # Enqueue background enrichment for each ticket (gated by kill switch)
+    if settings.enable_enrichment:
+        try:
+            pool = await get_arq_pool()
+            for t in tickets_to_add:
+                await pool.enqueue_job("run_enrich_ticket", str(t.ticket_id))
+        except Exception:
+            logger.warning("Failed to enqueue enrichment for uploaded tickets", exc_info=True)
 
     return TicketUploadResult(created=len(tickets_to_add), errors=errors)
 
