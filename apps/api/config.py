@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     default_client_id: str = "00000000-0000-0000-0000-000000000001"
     cors_origins: str = "http://localhost:3000"
+    site_url: str = "http://localhost:3000"
 
     class Config:
         env_file = ".env", "../../.env"  # works from apps/api/ or project root
