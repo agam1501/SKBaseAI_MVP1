@@ -22,17 +22,7 @@ import {
   ChevronLeft,
   X,
 } from "lucide-react";
-
-type Ticket = {
-  ticket_id: string;
-  external_id: string | null;
-  short_desc: string;
-  status: string | null;
-  priority: string | null;
-  is_resolved: boolean;
-  is_test: boolean;
-  created_at: string;
-};
+import type { Ticket } from "@/lib/types";
 
 type SortColumn = "external_id" | "short_desc" | "status" | "created_at";
 type SortDirection = "asc" | "desc";

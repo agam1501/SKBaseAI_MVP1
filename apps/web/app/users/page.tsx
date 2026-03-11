@@ -24,7 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-type UserRole = { role: "Admin" | "Responder" | "Developer" };
+import type { UserRole } from "@/lib/types";
 const ALLOWED_ROLES: UserRole["role"][] = ["Admin", "Developer"];
 
 const INVITE_ROLES_BY_ROLE: Record<string, UserRole["role"][]> = {

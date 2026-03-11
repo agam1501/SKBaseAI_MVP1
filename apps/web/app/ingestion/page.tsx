@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
-type UserRole = { role: "Admin" | "Responder" | "Developer" };
+import type { UserRole } from "@/lib/types";
 
 const ALLOWED_ROLES: UserRole["role"][] = ["Admin", "Developer"];
 

@@ -23,8 +23,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-type UserRole = { role: "Admin" | "Responder" | "Developer" };
+import type { UserRole } from "@/lib/types";
 
 const NAV_ITEMS = [
   { label: "Overview", href: "/overview", icon: BarChart2, roles: null },

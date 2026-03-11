@@ -1,7 +1,7 @@
 "use client";
 
 import { useClientContext } from "@/contexts/ClientContext";
-import { type TaxonomyRootCause } from "@/app/taxonomies/types";
+import type { TaxonomyRootCause } from "@/lib/types";
 import { apiClient } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase";
 import { useCallback, useEffect, useMemo, useState } from "react";

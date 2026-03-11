@@ -5,8 +5,7 @@ import { apiClient } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-type Proposal = { proposal_id: string; narrative: string; is_latest: boolean };
+import type { Proposal } from "@/lib/types";
 
 export default function ProposalCard({ proposal }: { proposal: Proposal }) {
   const [submitted, setSubmitted] = useState(false);

@@ -10,17 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { ReactNode } from "react";
-
-type Taxonomy = {
-  id: string;
-  taxonomy_type: string | null;
-  l1: string | null;
-  l2: string | null;
-  l3: string | null;
-  node: string | null;
-  confidence_score: number | null;
-  source: string | null;
-};
+import type { Ticket, Taxonomy } from "@/lib/types";
 
 const TAXONOMY_LABELS: Record<string, string> = {
   business_category: "Business",
@@ -37,25 +27,6 @@ const TAXONOMY_FIELD_PREFIX: Record<string, string> = {
 };
 
 const TAXONOMY_ORDER = ["business_category", "application", "root_cause", "resolution"];
-
-type Ticket = {
-  ticket_id: string;
-  client_id: string;
-  external_id: string | null;
-  source_system: string | null;
-  short_desc: string;
-  full_desc: string | null;
-  cleaned_text: string | null;
-  resolution: string | null;
-  root_cause: string | null;
-  status: string | null;
-  priority: string | null;
-  is_resolved: boolean;
-  is_test: boolean;
-  created_at: string;
-  updated_at: string;
-  resolved_at: string | null;
-};
 
 function Field({ label, value }: { label: string; value: ReactNode }) {
   return (
