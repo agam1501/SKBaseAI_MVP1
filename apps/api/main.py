@@ -7,7 +7,7 @@ from sqlalchemy import inspect
 
 from config import settings
 from models import Ticket, TicketProposal, TicketProposalFeedback, TicketTaxonomy, UserRoles
-from routes import analytics, clients, proposals, taxonomies, tickets
+from routes import analytics, clients, proposals, taxonomies, tickets, users
 from schemas import FeedbackRead, ProposalRead, TaxonomyRead, TicketRead, UserRoleRead
 
 app = FastAPI(title="SKBaseAI API", version="0.1.0")
@@ -91,3 +91,4 @@ app.include_router(tickets.router, prefix="/api/v1", dependencies=[Depends(get_c
 app.include_router(proposals.router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
 app.include_router(taxonomies.router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
 app.include_router(analytics.router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
+app.include_router(users.router, prefix="/api/v1", dependencies=[Depends(get_current_user)])

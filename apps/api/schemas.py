@@ -5,6 +5,21 @@ from pydantic import BaseModel, ConfigDict
 
 from models import TicketStatus, UserRole
 
+# --- Users ---
+
+
+class UserRead(BaseModel):
+    user_id: uuid.UUID
+    email: str
+    role: UserRole
+    invited_at: datetime
+
+
+class UserInvite(BaseModel):
+    email: str
+    role: UserRole
+
+
 # --- User Roles ---
 
 

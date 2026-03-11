@@ -3,6 +3,13 @@ const API_URL = "";
 
 export type ApiOptions = { clientId?: string | null };
 
+export type UserRead = {
+  user_id: string;
+  email: string;
+  role: "Admin" | "Responder" | "Developer";
+  invited_at: string;
+};
+
 export type CrossTabRow = {
   business_l1: string;
   application_l1: string;
