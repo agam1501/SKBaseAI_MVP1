@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
-type UserRole = { role: "Admin" | "Responder" | "Developer" };
+import type { UserRole } from "@/lib/types";
 
 const ALLOWED_ROLES: UserRole["role"][] = ["Admin", "Developer"];
 
@@ -22,7 +22,9 @@ export default function IngestionPage() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isTest, setIsTest] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState<TicketUploadResult | null>(null);
+  const [uploadResult, setUploadResult] = useState<TicketUploadResult | null>(
+    null,
+  );
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -78,9 +80,7 @@ export default function IngestionPage() {
   }
 
   if (roleError) {
-    return (
-      <div className="p-8 text-sm text-destructive">{roleError}</div>
-    );
+    return <div className="p-8 text-sm text-destructive">{roleError}</div>;
   }
 
   if (!role) {
@@ -127,7 +127,12 @@ export default function IngestionPage() {
                       setUploadResult(null);
                     }}
                   />
-                  <Button type="button" variant="outline" asChild className="w-fit">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    asChild
+                    className="w-fit"
+                  >
                     <span>Choose file</span>
                   </Button>
                 </label>
@@ -145,7 +150,8 @@ export default function IngestionPage() {
                 </label>
                 {isTest && (
                   <p className="text-xs text-muted-foreground">
-                    These tickets will be marked as test data and can be filtered out on the dashboard.
+                    These tickets will be marked as test data and can be
+                    filtered out on the dashboard.
                   </p>
                 )}
 
@@ -171,7 +177,9 @@ export default function IngestionPage() {
                     )}
                     {uploadResult.errors.length > 0 && (
                       <div>
-                        <p className="text-amber-700 font-medium">Row errors:</p>
+                        <p className="text-amber-700 font-medium">
+                          Row errors:
+                        </p>
                         <ul className="list-disc list-inside text-amber-800 mt-0.5">
                           {uploadResult.errors.map((err, i) => (
                             <li key={i}>
@@ -193,7 +201,8 @@ export default function IngestionPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Run-level ingestion history will appear here once job tracking is enabled.
+                  Run-level ingestion history will appear here once job tracking
+                  is enabled.
                 </p>
               </CardContent>
             </Card>

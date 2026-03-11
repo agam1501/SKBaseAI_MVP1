@@ -9,18 +9,22 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { ReactNode } from "react";
-
-type Taxonomy = {
-  id: string;
-  taxonomy_type: string | null;
-  l1: string | null;
-  l2: string | null;
-  l3: string | null;
-  node: string | null;
-  confidence_score: number | null;
-  source: string | null;
-};
+import type {
+  Ticket,
+  Taxonomy,
+  TaxonomyBusinessCategory,
+  TaxonomyApplication,
+  TaxonomyResolution,
+  TaxonomyRootCause,
+} from "@/lib/types";
 
 const TAXONOMY_LABELS: Record<string, string> = {
   business_category: "Business",
@@ -36,26 +40,57 @@ const TAXONOMY_FIELD_PREFIX: Record<string, string> = {
   resolution: "Resolution",
 };
 
-const TAXONOMY_ORDER = ["business_category", "application", "root_cause", "resolution"];
+const TAXONOMY_ORDER = [
+  "business_category",
+  "application",
+  "root_cause",
+  "resolution",
+];
 
-type Ticket = {
-  ticket_id: string;
-  client_id: string;
-  external_id: string | null;
-  source_system: string | null;
-  short_desc: string;
-  full_desc: string | null;
-  cleaned_text: string | null;
-  resolution: string | null;
-  root_cause: string | null;
-  status: string | null;
-  priority: string | null;
-  is_resolved: boolean;
-  is_test: boolean;
-  created_at: string;
-  updated_at: string;
-  resolved_at: string | null;
+const TAXONOMY_REF_PATH: Record<string, string> = {
+  business_category: "business-category",
+  application: "application",
+  root_cause: "root-cause",
+  resolution: "resolution",
 };
+
+type RefOption = { l1: string; l2: string; l3: string; node: string };
+type Draft = { l1: string; l2: string; l3: string };
+
+function normalizeRefData(type: string, data: unknown[]): RefOption[] {
+  switch (type) {
+    case "business_category":
+      return (data as TaxonomyBusinessCategory[]).map((r) => ({
+        l1: r.l1,
+        l2: r.l2,
+        l3: r.l3,
+        node: r.node,
+      }));
+    case "application":
+      return (data as TaxonomyApplication[]).map((r) => ({
+        l1: r.l1,
+        l2: r.l2,
+        l3: r.l3,
+        node: r.node_id,
+      }));
+    case "root_cause":
+      return (data as TaxonomyRootCause[]).map((r) => ({
+        l1: r.l1_cause_domain,
+        l2: r.l2_cause_type,
+        l3: r.l3_root_cause,
+        node: r.root_cause_code_id,
+      }));
+    case "resolution":
+      return (data as TaxonomyResolution[]).map((r) => ({
+        l1: r.l1_outcome,
+        l2: r.l2_action_type,
+        l3: r.l3_resolution_code,
+        node: r.resolution_code,
+      }));
+    default:
+      return [];
+  }
+}
 
 function Field({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -68,6 +103,8 @@ function Field({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
+const EMPTY_DRAFT: Draft = { l1: "", l2: "", l3: "" };
+
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -79,6 +116,14 @@ export default function TicketDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [taxonomyError, setTaxonomyError] = useState<string | null>(null);
   const [toggling, setToggling] = useState(false);
+
+  // Global taxonomy edit state
+  const [isEditing, setIsEditing] = useState(false);
+  const [refByType, setRefByType] = useState<Record<string, RefOption[]>>({});
+  const [draftByType, setDraftByType] = useState<Record<string, Draft>>({});
+  const [refLoading, setRefLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedClient) return;
@@ -104,7 +149,10 @@ export default function TicketDetailPage() {
         setTaxonomies(tax);
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
-        console.error("[taxonomy fetch]", msg, { ticketId: id, clientId: selectedClient.client_id });
+        console.error("[taxonomy fetch]", msg, {
+          ticketId: id,
+          clientId: selectedClient.client_id,
+        });
         setTaxonomyError(msg);
       }
     });
@@ -130,6 +178,136 @@ export default function TicketDetailPage() {
       setError(e instanceof Error ? e.message : "Failed to update status");
     } finally {
       setToggling(false);
+    }
+  }
+
+  async function startEditing() {
+    setIsEditing(true);
+    setRefLoading(true);
+    setSaveError(null);
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) {
+      setRefLoading(false);
+      return;
+    }
+    try {
+      const results = await Promise.all(
+        TAXONOMY_ORDER.map((type) =>
+          apiClient
+            .get<
+              unknown[]
+            >(`/api/v1/taxonomies/${TAXONOMY_REF_PATH[type]}`, token, { clientId: selectedClient?.client_id })
+            .then((raw) => ({ type, options: normalizeRefData(type, raw) })),
+        ),
+      );
+
+      const newRefByType: Record<string, RefOption[]> = {};
+      const newDraftByType: Record<string, Draft> = {};
+
+      for (const { type, options } of results) {
+        newRefByType[type] = options;
+        // Pre-populate from existing assignment only if the value exists in ref data
+        const existing = taxonomies.find((t) => t.taxonomy_type === type);
+        const existingL1 = existing?.l1 ?? "";
+        const l1Match = options.some((r) => r.l1 === existingL1);
+        if (l1Match && existingL1) {
+          const existingL2 = existing?.l2 ?? "";
+          const l2Match = options.some(
+            (r) => r.l1 === existingL1 && r.l2 === existingL2,
+          );
+          const existingL3 = existing?.l3 ?? "";
+          const l3Match = options.some(
+            (r) =>
+              r.l1 === existingL1 && r.l2 === existingL2 && r.l3 === existingL3,
+          );
+          newDraftByType[type] = {
+            l1: existingL1,
+            l2: l2Match ? existingL2 : "",
+            l3: l2Match && l3Match ? existingL3 : "",
+          };
+        } else {
+          newDraftByType[type] = { ...EMPTY_DRAFT };
+        }
+      }
+
+      setRefByType(newRefByType);
+      setDraftByType(newDraftByType);
+    } catch {
+      setSaveError("Failed to load taxonomy reference data");
+    } finally {
+      setRefLoading(false);
+    }
+  }
+
+  function cancelEditing() {
+    setIsEditing(false);
+    setRefByType({});
+    setDraftByType({});
+    setSaveError(null);
+  }
+
+  function setDraft(type: string, field: keyof Draft, value: string) {
+    setDraftByType((prev) => ({
+      ...prev,
+      [type]: {
+        ...prev[type],
+        [field]: value,
+        ...(field === "l1" ? { l2: "", l3: "" } : {}),
+        ...(field === "l2" ? { l3: "" } : {}),
+      },
+    }));
+  }
+
+  async function handleSaveAll() {
+    if (!selectedClient) return;
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return;
+
+    const typesToSave = TAXONOMY_ORDER.filter((type) => draftByType[type]?.l1);
+    if (typesToSave.length === 0) {
+      cancelEditing();
+      return;
+    }
+
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const results = await Promise.all(
+        typesToSave.map((type) => {
+          const draft = draftByType[type];
+          const options = refByType[type] ?? [];
+          const match = options.find(
+            (r) => r.l1 === draft.l1 && r.l2 === draft.l2 && r.l3 === draft.l3,
+          );
+          return apiClient.post<Taxonomy>(
+            `/api/v1/taxonomies/tickets/${id}/${type}`,
+            token,
+            {
+              l1: draft.l1 || null,
+              l2: draft.l2 || null,
+              l3: draft.l3 || null,
+              node: match?.node ?? null,
+            },
+            { clientId: selectedClient.client_id },
+          );
+        }),
+      );
+
+      setTaxonomies((prev) => {
+        const updated = prev.filter(
+          (t) => !typesToSave.includes(t.taxonomy_type ?? ""),
+        );
+        return [...updated, ...results];
+      });
+      cancelEditing();
+    } catch (e: unknown) {
+      setSaveError(
+        e instanceof Error ? e.message : "Failed to save taxonomies",
+      );
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -272,7 +450,37 @@ export default function TicketDetailPage() {
 
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-bold">Taxonomies</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">Taxonomies</h2>
+              {!isEditing ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={startEditing}
+                  disabled={refLoading}
+                >
+                  Edit Taxonomies
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleSaveAll}
+                    disabled={saving || refLoading}
+                  >
+                    {saving ? "Saving…" : "Save"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={cancelEditing}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {taxonomyError && (
@@ -280,38 +488,150 @@ export default function TicketDetailPage() {
                 Failed to load taxonomies: {taxonomyError}
               </p>
             )}
-            {!taxonomyError && taxonomies.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No taxonomies assigned yet.</p>
-            ) : !taxonomyError && (
-              <div className="space-y-5">
-                {TAXONOMY_ORDER.filter((type) =>
-                  taxonomies.some((t) => t.taxonomy_type === type)
-                ).map((type) => {
-                  const entries = taxonomies.filter((t) => t.taxonomy_type === type);
-                  return (
-                    <div key={type} className="space-y-2">
-                      <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                        {TAXONOMY_LABELS[type] ?? type}
-                      </p>
-                      {entries.map((t) => {
-                        const prefix = TAXONOMY_FIELD_PREFIX[type] ?? type;
-                        return (
-                          <div key={t.id} className="grid grid-cols-2 gap-x-4 gap-y-2">
-                            {t.l1 && <Field label={`${prefix} L1`} value={t.l1} />}
-                            {t.l2 && <Field label={`${prefix} L2`} value={t.l2} />}
-                            {t.l3 && <Field label={`${prefix} L3`} value={t.l3} />}
-                            {t.node && <Field label={`${prefix} Node`} value={t.node} />}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
+            {saveError && (
+              <p className="text-sm text-destructive mb-3">{saveError}</p>
             )}
+            {refLoading && (
+              <p className="text-sm text-muted-foreground mb-3">
+                Loading options…
+              </p>
+            )}
+            <div className="space-y-6">
+              {TAXONOMY_ORDER.map((type) => {
+                const existing = taxonomies.find(
+                  (t) => t.taxonomy_type === type,
+                );
+                const prefix = TAXONOMY_FIELD_PREFIX[type] ?? type;
+                const options = refByType[type] ?? [];
+                const draft = draftByType[type] ?? EMPTY_DRAFT;
+
+                const l1Options = [...new Set(options.map((r) => r.l1))].sort();
+                const l2Options = draft.l1
+                  ? [
+                      ...new Set(
+                        options
+                          .filter((r) => r.l1 === draft.l1)
+                          .map((r) => r.l2),
+                      ),
+                    ].sort()
+                  : [];
+                const l3Options =
+                  draft.l1 && draft.l2
+                    ? [
+                        ...new Set(
+                          options
+                            .filter(
+                              (r) => r.l1 === draft.l1 && r.l2 === draft.l2,
+                            )
+                            .map((r) => r.l3),
+                        ),
+                      ].sort()
+                    : [];
+
+                return (
+                  <div key={type} className="space-y-2">
+                    <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                      {TAXONOMY_LABELS[type] ?? type}
+                    </p>
+
+                    {isEditing && !refLoading ? (
+                      <div className="space-y-2">
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            {prefix} L1
+                          </p>
+                          <Select
+                            value={draft.l1}
+                            onValueChange={(v) => setDraft(type, "l1", v)}
+                          >
+                            <SelectTrigger className="h-8 text-sm">
+                              <SelectValue placeholder="Select L1…" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {l1Options.map((v) => (
+                                <SelectItem key={v} value={v}>
+                                  {v}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            {prefix} L2
+                          </p>
+                          <Select
+                            value={draft.l2}
+                            onValueChange={(v) => setDraft(type, "l2", v)}
+                            disabled={!draft.l1}
+                          >
+                            <SelectTrigger className="h-8 text-sm">
+                              <SelectValue
+                                placeholder={
+                                  draft.l1 ? "Select L2…" : "Select L1 first"
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {l2Options.map((v) => (
+                                <SelectItem key={v} value={v}>
+                                  {v}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            {prefix} L3
+                          </p>
+                          <Select
+                            value={draft.l3}
+                            onValueChange={(v) => setDraft(type, "l3", v)}
+                            disabled={!draft.l2}
+                          >
+                            <SelectTrigger className="h-8 text-sm">
+                              <SelectValue
+                                placeholder={
+                                  draft.l2 ? "Select L3…" : "Select L2 first"
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {l3Options.map((v) => (
+                                <SelectItem key={v} value={v}>
+                                  {v}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    ) : existing ? (
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                        {existing.l1 && (
+                          <Field label={`${prefix} L1`} value={existing.l1} />
+                        )}
+                        {existing.l2 && (
+                          <Field label={`${prefix} L2`} value={existing.l2} />
+                        )}
+                        {existing.l3 && (
+                          <Field label={`${prefix} L3`} value={existing.l3} />
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Not assigned yet.
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
-
       </div>
     </div>
   );

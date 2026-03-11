@@ -22,17 +22,7 @@ import {
   ChevronLeft,
   X,
 } from "lucide-react";
-
-type Ticket = {
-  ticket_id: string;
-  external_id: string | null;
-  short_desc: string;
-  status: string | null;
-  priority: string | null;
-  is_resolved: boolean;
-  is_test: boolean;
-  created_at: string;
-};
+import type { Ticket } from "@/lib/types";
 
 type SortColumn = "external_id" | "short_desc" | "status" | "created_at";
 type SortDirection = "asc" | "desc";
@@ -269,10 +259,7 @@ function FilterPopoverContent({
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  const {
-    selectedClient,
-    error,
-  } = useClientContext();
+  const { selectedClient, error } = useClientContext();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketsError, setTicketsError] = useState<string | null>(null);
   const [ticketsLoading, setTicketsLoading] = useState(false);
@@ -510,10 +497,7 @@ export default function DashboardPage() {
                     <thead className="bg-gray-50">
                       <tr>
                         {showTestData && (
-                          <th
-                            scope="col"
-                            className="w-0 px-2 py-3"
-                          />
+                          <th scope="col" className="w-0 px-2 py-3" />
                         )}
                         <th
                           scope="col"

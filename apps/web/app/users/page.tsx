@@ -24,7 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-type UserRole = { role: "Admin" | "Responder" | "Developer" };
+import type { UserRole } from "@/lib/types";
 const ALLOWED_ROLES: UserRole["role"][] = ["Admin", "Developer"];
 
 const INVITE_ROLES_BY_ROLE: Record<string, UserRole["role"][]> = {
@@ -155,7 +155,10 @@ export default function UsersPage() {
                 </p>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleInvite} className="flex gap-3 items-end flex-wrap">
+                <form
+                  onSubmit={handleInvite}
+                  className="flex gap-3 items-end flex-wrap"
+                >
                   <div className="flex-1 min-w-48 space-y-1">
                     <label className="text-sm font-medium">Email</label>
                     <Input
@@ -170,7 +173,9 @@ export default function UsersPage() {
                     <label className="text-sm font-medium">Role</label>
                     <Select
                       value={inviteRole}
-                      onValueChange={(v) => setInviteRole(v as UserRole["role"])}
+                      onValueChange={(v) =>
+                        setInviteRole(v as UserRole["role"])
+                      }
                     >
                       <SelectTrigger className="w-36">
                         <SelectValue />

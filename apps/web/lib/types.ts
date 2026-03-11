@@ -1,3 +1,43 @@
+// Shared domain types for SKBaseAI frontend
+
+export type UserRole = { role: "Admin" | "Responder" | "Developer" };
+
+export type Ticket = {
+  ticket_id: string;
+  client_id: string;
+  external_id: string | null;
+  source_system: string | null;
+  short_desc: string;
+  full_desc: string | null;
+  cleaned_text: string | null;
+  resolution: string | null;
+  root_cause: string | null;
+  status: string | null;
+  priority: string | null;
+  is_resolved: boolean;
+  is_test: boolean;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+};
+
+export type Taxonomy = {
+  id: string;
+  taxonomy_type: string | null;
+  l1: string | null;
+  l2: string | null;
+  l3: string | null;
+  node: string | null;
+  confidence_score: number | null;
+  source: string | null;
+};
+
+export type Proposal = {
+  proposal_id: string;
+  narrative: string;
+  is_latest: boolean;
+};
+
 export type TaxonomyBusinessCategory = {
   id: string;
   client_id: string | null;

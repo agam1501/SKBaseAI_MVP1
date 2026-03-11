@@ -36,7 +36,9 @@ function CallbackHandler() {
     const timer = setTimeout(async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
-        setError("Invitation link is invalid or expired. Please request a new invite.");
+        setError(
+          "Invitation link is invalid or expired. Please request a new invite.",
+        );
       }
     }, 5000);
 

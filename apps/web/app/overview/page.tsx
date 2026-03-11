@@ -69,7 +69,14 @@ export default function OverviewPage() {
   }, [selectedClient, supabase]);
 
   // Pivot logic
-  const { businessL1s, applicationL1s, cellMap, rowTotals, colTotals, grandTotal } = useMemo(() => {
+  const {
+    businessL1s,
+    applicationL1s,
+    cellMap,
+    rowTotals,
+    colTotals,
+    grandTotal,
+  } = useMemo(() => {
     const bizList = matrix?.business_l1s ?? [];
     const allAppList = matrix?.application_l1s ?? [];
     const map = new Map<string, number>();
@@ -85,20 +92,38 @@ export default function OverviewPage() {
 
     const rowTotals = new Map<string, number>();
     for (const biz of bizList) {
-      rowTotals.set(biz, appList.reduce((sum, app) => sum + (map.get(`${biz}||${app}`) ?? 0), 0));
+      rowTotals.set(
+        biz,
+        appList.reduce((sum, app) => sum + (map.get(`${biz}||${app}`) ?? 0), 0),
+      );
     }
 
     const colTotals = new Map<string, number>();
     for (const app of appList) {
-      colTotals.set(app, bizList.reduce((sum, biz) => sum + (map.get(`${biz}||${app}`) ?? 0), 0));
+      colTotals.set(
+        app,
+        bizList.reduce((sum, biz) => sum + (map.get(`${biz}||${app}`) ?? 0), 0),
+      );
     }
 
-    const grandTotal = bizList.reduce((sum, biz) => sum + (rowTotals.get(biz) ?? 0), 0);
+    const grandTotal = bizList.reduce(
+      (sum, biz) => sum + (rowTotals.get(biz) ?? 0),
+      0,
+    );
 
-    return { businessL1s: bizList, applicationL1s: appList, cellMap: map, rowTotals, colTotals, grandTotal };
+    return {
+      businessL1s: bizList,
+      applicationL1s: appList,
+      cellMap: map,
+      rowTotals,
+      colTotals,
+      grandTotal,
+    };
   }, [matrix, appFilter]);
 
-  const hasData = matrix !== null && (matrix.business_l1s.length > 0 || matrix.application_l1s.length > 0);
+  const hasData =
+    matrix !== null &&
+    (matrix.business_l1s.length > 0 || matrix.application_l1s.length > 0);
 
   return (
     <div className="min-h-screen p-8">
@@ -121,9 +146,12 @@ export default function OverviewPage() {
             <CardHeader>
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                  <h2 className="text-lg font-bold">Business L1 × Application L1</h2>
+                  <h2 className="text-lg font-bold">
+                    Business L1 × Application L1
+                  </h2>
                   <p className="text-sm text-muted-foreground">
-                    Client: <span className="font-medium">{selectedClient.name}</span>
+                    Client:{" "}
+                    <span className="font-medium">{selectedClient.name}</span>
                   </p>
                 </div>
                 {hasData && (
@@ -140,9 +168,7 @@ export default function OverviewPage() {
               {loading && (
                 <p className="text-sm text-muted-foreground">Loading…</p>
               )}
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
+              {error && <p className="text-sm text-destructive">{error}</p>}
               {!loading && !error && !hasData && (
                 <p className="text-sm text-muted-foreground">
                   No data available for this client.
@@ -164,7 +190,9 @@ export default function OverviewPage() {
                               {biz}
                             </TableHead>
                           ))}
-                          <TableHead className="font-semibold text-right border-l border-border">Total</TableHead>
+                          <TableHead className="font-semibold text-right border-l border-border">
+                            Total
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
