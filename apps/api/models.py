@@ -71,7 +71,9 @@ class UserInvitation(Base):
         ),
         nullable=False,
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
 
 
 class TicketStatus(str, enum.Enum):

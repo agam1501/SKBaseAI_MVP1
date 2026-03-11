@@ -84,7 +84,9 @@ async def invite_user(
         UserRole.developer: {UserRole.admin, UserRole.responder},
     }
     if caller_role is None or body.role not in allowed.get(caller_role.role, set()):
-        raise HTTPException(status_code=403, detail=f"Your role cannot invite {body.role.value} users")
+        raise HTTPException(
+            status_code=403, detail=f"Your role cannot invite {body.role.value} users"
+        )
 
     redirect_to = f"{settings.site_url}/auth/callback"
     try:
