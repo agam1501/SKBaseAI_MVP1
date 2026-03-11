@@ -78,6 +78,7 @@ class TicketRead(BaseModel):
     priority: str | None
     is_resolved: bool
     is_test: bool
+    enrichment_status: str | None
     created_at: datetime
     updated_at: datetime
     resolved_at: datetime | None

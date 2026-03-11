@@ -81,6 +81,13 @@ class TicketStatus(str, enum.Enum):
     CLOSED = "CLOSED"
 
 
+class EnrichmentStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
 class Ticket(Base):
     __tablename__ = "tickets"
 
@@ -99,6 +106,9 @@ class Ticket(Base):
     priority: Mapped[str | None] = mapped_column(String(50))
     is_resolved: Mapped[bool] = mapped_column(Boolean, default=False)
     is_test: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    enrichment_status: Mapped[str | None] = mapped_column(
+        Enum(EnrichmentStatus, name="enrichment_status_enum", create_type=False),
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

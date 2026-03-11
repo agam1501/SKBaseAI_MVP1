@@ -6,7 +6,7 @@
 - **asyncpg** — async Postgres driver
 - **python-jose** — JWT verification (ES256)
 - **pgvector** — vector similarity (Phase 2)
-- **ARQ** — async job queue (Phase 3)
+- **ARQ + Redis** — async background enrichment queue (see [enrichment-pipeline.md](./enrichment-pipeline.md))
 
 ## File Structure
 
@@ -23,10 +23,18 @@ apps/api/
 │   ├── tickets.py   # POST /tickets, GET /tickets, GET /tickets/{id}, PATCH /tickets/{id}/status, POST /tickets/upload
 │   ├── proposals.py # GET /proposals/tickets/{id}/latest, POST /proposals/{id}/feedback
 │   └── taxonomies.py# GET /taxonomies/tickets/{id}, GET /taxonomies/business-category, /application, /resolution, /root-cause
-└── services/
-    ├── llm.py       # extract_taxonomies(), generate_proposal() — Phase 2 stub
-    ├── embeddings.py# chunk_text(), embed_texts() — Phase 2 stub
-    └── retrieval.py # find_similar_tickets() via pgvector — Phase 2 stub
+├── arq_pool.py      # Shared ARQ Redis connection pool (get/close)
+├── worker.py        # ARQ WorkerSettings + run_enrich_ticket task wrapper
+├── services/
+│   ├── llm.py                  # extract_taxonomies() → delegates to TaxonomyPredictor; generate_proposal() — stub
+│   ├── taxonomy_predictor.py   # Cascading L1→L2→L3 taxonomy prediction via OpenAI structured output
+│   ├── enrichment.py           # enrich_ticket() — reusable enrichment pipeline
+│   ├── embeddings.py           # chunk_text(), embed_texts() — Phase 2 stub
+│   └── retrieval.py            # find_similar_tickets() via pgvector — Phase 2 stub
+└── tests/
+    ├── conftest.py             # sys.path setup for test imports
+    ├── test_taxonomy_predictor.py  # 19 unit tests (mocked OpenAI + DB)
+    └── test_enrichment.py         # 8 unit tests (enrichment pipeline)
 ```
 
 ## Auth Flow
@@ -84,6 +92,7 @@ Role is stored in `public.user_roles` (`user_id`, `role` enum). The ingestion pa
 | `GET` | `/tickets` | List tickets (optional `?is_test=true\|false` query param to filter by test flag) |
 | `GET` | `/tickets/{id}` | Get single ticket (all fields, includes `is_test`) |
 | `PATCH` | `/tickets/{id}/status` | Update `status` + `is_resolved` |
+| `POST` | `/tickets/{id}/enrich` | Manually trigger (or re-trigger) background enrichment |
 
 ### Status Update
 
@@ -186,7 +195,17 @@ If a field is added to a Pydantic schema without a matching ORM column, the app 
 
 ## Deploying (Railway)
 - Config: `apps/api/railway.toml`
-- Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+- **API service**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+- **Worker service**: `arq worker.WorkerSettings` (same codebase, root dir `apps/api`)
+- **Redis**: Railway plugin (managed)
 - Health checks: `GET /health`, `GET /health/db`
 - Env vars set in Railway dashboard (see `docs/deployment.md`)
 - `CORS_ORIGINS` is set to `http://localhost:3000` only — browser never calls Railway in production
+
+See [docs/enrichment-pipeline.md](./enrichment-pipeline.md) for full worker/Redis architecture details.
+
+## Taxonomy Prediction
+
+Tickets are automatically classified across 4 taxonomy dimensions (Business Category, Application, Resolution, Root Cause) using OpenAI `gpt-4o-mini` with cascading L1 → L2 → L3 structured output.
+
+Requires `OPENAI_API_KEY` in Railway env vars. See [docs/taxonomy-prediction.md](./taxonomy-prediction.md) for full details.
