@@ -117,7 +117,7 @@ async def upload_tickets_csv(
     db: AsyncSession = Depends(get_db),
     client_id: uuid.UUID = Depends(get_effective_client_id),
 ):
-    """Parse CSV in memory, validate each row with TicketCreate, insert valid rows. Does not store the CSV."""
+    """Parse CSV in memory, validate each row with TicketCreate, insert valid rows."""
     if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="File must be a CSV (filename ending in .csv)")
     content = await file.read()
