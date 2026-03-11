@@ -55,6 +55,7 @@ const TAXONOMY_REF_PATH: Record<string, string> = {
 };
 
 type RefOption = { l1: string; l2: string; l3: string; node: string };
+type Draft = { l1: string; l2: string; l3: string };
 
 function normalizeRefData(type: string, data: unknown[]): RefOption[] {
   switch (type) {
@@ -102,6 +103,8 @@ function Field({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
+const EMPTY_DRAFT: Draft = { l1: "", l2: "", l3: "" };
+
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -114,12 +117,11 @@ export default function TicketDetailPage() {
   const [taxonomyError, setTaxonomyError] = useState<string | null>(null);
   const [toggling, setToggling] = useState(false);
 
-  // Taxonomy edit state
-  const [editingType, setEditingType] = useState<string | null>(null);
-  const [refData, setRefData] = useState<RefOption[]>([]);
-  const [draftL1, setDraftL1] = useState("");
-  const [draftL2, setDraftL2] = useState("");
-  const [draftL3, setDraftL3] = useState("");
+  // Global taxonomy edit state
+  const [isEditing, setIsEditing] = useState(false);
+  const [refByType, setRefByType] = useState<Record<string, RefOption[]>>({});
+  const [draftByType, setDraftByType] = useState<Record<string, Draft>>({});
+  const [refLoading, setRefLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -179,67 +181,138 @@ export default function TicketDetailPage() {
     }
   }
 
-  async function startEditing(type: string, existing: Taxonomy | undefined) {
-    setEditingType(type);
-    setDraftL1(existing?.l1 ?? "");
-    setDraftL2(existing?.l2 ?? "");
-    setDraftL3(existing?.l3 ?? "");
+  async function startEditing() {
+    setIsEditing(true);
+    setRefLoading(true);
     setSaveError(null);
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
-    if (!token) return;
+    if (!token) {
+      setRefLoading(false);
+      return;
+    }
     try {
-      const path = TAXONOMY_REF_PATH[type];
-      const raw = await apiClient.get<unknown[]>(
-        `/api/v1/taxonomies/${path}`,
-        token,
-        { clientId: selectedClient?.client_id },
+      const results = await Promise.all(
+        TAXONOMY_ORDER.map((type) =>
+          apiClient
+            .get<unknown[]>(
+              `/api/v1/taxonomies/${TAXONOMY_REF_PATH[type]}`,
+              token,
+              { clientId: selectedClient?.client_id },
+            )
+            .then((raw) => ({ type, options: normalizeRefData(type, raw) })),
+        ),
       );
-      setRefData(normalizeRefData(type, raw));
+
+      const newRefByType: Record<string, RefOption[]> = {};
+      const newDraftByType: Record<string, Draft> = {};
+
+      for (const { type, options } of results) {
+        newRefByType[type] = options;
+        // Pre-populate from existing assignment only if the value exists in ref data
+        const existing = taxonomies.find((t) => t.taxonomy_type === type);
+        const existingL1 = existing?.l1 ?? "";
+        const l1Match = options.some((r) => r.l1 === existingL1);
+        if (l1Match && existingL1) {
+          const existingL2 = existing?.l2 ?? "";
+          const l2Match = options.some(
+            (r) => r.l1 === existingL1 && r.l2 === existingL2,
+          );
+          const existingL3 = existing?.l3 ?? "";
+          const l3Match = options.some(
+            (r) =>
+              r.l1 === existingL1 &&
+              r.l2 === existingL2 &&
+              r.l3 === existingL3,
+          );
+          newDraftByType[type] = {
+            l1: existingL1,
+            l2: l2Match ? existingL2 : "",
+            l3: l2Match && l3Match ? existingL3 : "",
+          };
+        } else {
+          newDraftByType[type] = { ...EMPTY_DRAFT };
+        }
+      }
+
+      setRefByType(newRefByType);
+      setDraftByType(newDraftByType);
     } catch {
-      setSaveError("Failed to load reference data");
-      setRefData([]);
+      setSaveError("Failed to load taxonomy reference data");
+    } finally {
+      setRefLoading(false);
     }
   }
 
   function cancelEditing() {
-    setEditingType(null);
-    setRefData([]);
-    setDraftL1("");
-    setDraftL2("");
-    setDraftL3("");
+    setIsEditing(false);
+    setRefByType({});
+    setDraftByType({});
     setSaveError(null);
   }
 
-  async function handleSaveTaxonomy(type: string) {
+  function setDraft(type: string, field: keyof Draft, value: string) {
+    setDraftByType((prev) => ({
+      ...prev,
+      [type]: {
+        ...prev[type],
+        [field]: value,
+        ...(field === "l1" ? { l2: "", l3: "" } : {}),
+        ...(field === "l2" ? { l3: "" } : {}),
+      },
+    }));
+  }
+
+  async function handleSaveAll() {
     if (!selectedClient) return;
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) return;
-    const match = refData.find(
-      (r) => r.l1 === draftL1 && r.l2 === draftL2 && r.l3 === draftL3,
+
+    const typesToSave = TAXONOMY_ORDER.filter(
+      (type) => draftByType[type]?.l1,
     );
+    if (typesToSave.length === 0) {
+      cancelEditing();
+      return;
+    }
+
     setSaving(true);
     setSaveError(null);
     try {
-      const created = await apiClient.post<Taxonomy>(
-        `/api/v1/taxonomies/tickets/${id}/${type}`,
-        token,
-        {
-          l1: draftL1 || null,
-          l2: draftL2 || null,
-          l3: draftL3 || null,
-          node: match?.node ?? null,
-        },
-        { clientId: selectedClient.client_id },
+      const results = await Promise.all(
+        typesToSave.map((type) => {
+          const draft = draftByType[type];
+          const options = refByType[type] ?? [];
+          const match = options.find(
+            (r) =>
+              r.l1 === draft.l1 && r.l2 === draft.l2 && r.l3 === draft.l3,
+          );
+          return apiClient.post<Taxonomy>(
+            `/api/v1/taxonomies/tickets/${id}/${type}`,
+            token,
+            {
+              l1: draft.l1 || null,
+              l2: draft.l2 || null,
+              l3: draft.l3 || null,
+              node: match?.node ?? null,
+            },
+            { clientId: selectedClient.client_id },
+          );
+        }),
       );
-      setTaxonomies((prev) => [
-        ...prev.filter((t) => t.taxonomy_type !== type),
-        created,
-      ]);
+
+      setTaxonomies((prev) => {
+        const updated = prev.filter(
+          (t) => !typesToSave.includes(t.taxonomy_type ?? ""),
+        );
+        return [...updated, ...results];
+      });
       cancelEditing();
     } catch (e: unknown) {
-      setSaveError(e instanceof Error ? e.message : "Failed to save taxonomy");
+      setSaveError(
+        e instanceof Error ? e.message : "Failed to save taxonomies",
+      );
     } finally {
       setSaving(false);
     }
@@ -384,7 +457,37 @@ export default function TicketDetailPage() {
 
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-bold">Taxonomies</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">Taxonomies</h2>
+              {!isEditing ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={startEditing}
+                  disabled={refLoading}
+                >
+                  Edit Taxonomies
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleSaveAll}
+                    disabled={saving || refLoading}
+                  >
+                    {saving ? "Saving…" : "Save"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={cancelEditing}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {taxonomyError && (
@@ -392,30 +495,41 @@ export default function TicketDetailPage() {
                 Failed to load taxonomies: {taxonomyError}
               </p>
             )}
+            {saveError && (
+              <p className="text-sm text-destructive mb-3">{saveError}</p>
+            )}
+            {refLoading && (
+              <p className="text-sm text-muted-foreground mb-3">
+                Loading options…
+              </p>
+            )}
             <div className="space-y-6">
               {TAXONOMY_ORDER.map((type) => {
                 const existing = taxonomies.find(
                   (t) => t.taxonomy_type === type,
                 );
-                const isEditing = editingType === type;
                 const prefix = TAXONOMY_FIELD_PREFIX[type] ?? type;
+                const options = refByType[type] ?? [];
+                const draft = draftByType[type] ?? EMPTY_DRAFT;
 
-                const l1Options = [...new Set(refData.map((r) => r.l1))].sort();
-                const l2Options = draftL1
+                const l1Options = [...new Set(options.map((r) => r.l1))].sort();
+                const l2Options = draft.l1
                   ? [
                       ...new Set(
-                        refData
-                          .filter((r) => r.l1 === draftL1)
+                        options
+                          .filter((r) => r.l1 === draft.l1)
                           .map((r) => r.l2),
                       ),
                     ].sort()
                   : [];
                 const l3Options =
-                  draftL1 && draftL2
+                  draft.l1 && draft.l2
                     ? [
                         ...new Set(
-                          refData
-                            .filter((r) => r.l1 === draftL1 && r.l2 === draftL2)
+                          options
+                            .filter(
+                              (r) => r.l1 === draft.l1 && r.l2 === draft.l2,
+                            )
                             .map((r) => r.l3),
                         ),
                       ].sort()
@@ -423,35 +537,19 @@ export default function TicketDetailPage() {
 
                 return (
                   <div key={type} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                        {TAXONOMY_LABELS[type] ?? type}
-                      </p>
-                      {!isEditing && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs h-7 px-2"
-                          onClick={() => startEditing(type, existing)}
-                        >
-                          Edit
-                        </Button>
-                      )}
-                    </div>
+                    <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                      {TAXONOMY_LABELS[type] ?? type}
+                    </p>
 
-                    {isEditing ? (
-                      <div className="space-y-3 pt-1">
+                    {isEditing && !refLoading ? (
+                      <div className="space-y-2">
                         <div className="space-y-1">
                           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                             {prefix} L1
                           </p>
                           <Select
-                            value={draftL1}
-                            onValueChange={(v) => {
-                              setDraftL1(v);
-                              setDraftL2("");
-                              setDraftL3("");
-                            }}
+                            value={draft.l1}
+                            onValueChange={(v) => setDraft(type, "l1", v)}
                           >
                             <SelectTrigger className="h-8 text-sm">
                               <SelectValue placeholder="Select L1…" />
@@ -471,17 +569,14 @@ export default function TicketDetailPage() {
                             {prefix} L2
                           </p>
                           <Select
-                            value={draftL2}
-                            onValueChange={(v) => {
-                              setDraftL2(v);
-                              setDraftL3("");
-                            }}
-                            disabled={!draftL1}
+                            value={draft.l2}
+                            onValueChange={(v) => setDraft(type, "l2", v)}
+                            disabled={!draft.l1}
                           >
                             <SelectTrigger className="h-8 text-sm">
                               <SelectValue
                                 placeholder={
-                                  draftL1 ? "Select L2…" : "Select L1 first"
+                                  draft.l1 ? "Select L2…" : "Select L1 first"
                                 }
                               />
                             </SelectTrigger>
@@ -500,14 +595,14 @@ export default function TicketDetailPage() {
                             {prefix} L3
                           </p>
                           <Select
-                            value={draftL3}
-                            onValueChange={setDraftL3}
-                            disabled={!draftL2}
+                            value={draft.l3}
+                            onValueChange={(v) => setDraft(type, "l3", v)}
+                            disabled={!draft.l2}
                           >
                             <SelectTrigger className="h-8 text-sm">
                               <SelectValue
                                 placeholder={
-                                  draftL2 ? "Select L3…" : "Select L2 first"
+                                  draft.l2 ? "Select L3…" : "Select L2 first"
                                 }
                               />
                             </SelectTrigger>
@@ -519,30 +614,6 @@ export default function TicketDetailPage() {
                               ))}
                             </SelectContent>
                           </Select>
-                        </div>
-
-                        {saveError && (
-                          <p className="text-xs text-destructive">
-                            {saveError}
-                          </p>
-                        )}
-
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleSaveTaxonomy(type)}
-                            disabled={!draftL1 || saving}
-                          >
-                            {saving ? "Saving…" : "Save"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={cancelEditing}
-                            disabled={saving}
-                          >
-                            Cancel
-                          </Button>
                         </div>
                       </div>
                     ) : existing ? (
