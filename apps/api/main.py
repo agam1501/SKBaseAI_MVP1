@@ -39,10 +39,17 @@ async def startup():
         resp.raise_for_status()
         app.state.jwks = resp.json().get("keys", [])
 
-    # Initialize ARQ connection pool for background job enqueuing
-    from arq_pool import get_arq_pool
+    # Initialize ARQ connection pool for background job enqueuing (non-fatal if Redis unavailable)
+    try:
+        from arq_pool import get_arq_pool
 
-    app.state.arq_pool = await get_arq_pool()
+        app.state.arq_pool = await get_arq_pool()
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "ARQ pool init failed — enrichment will not work", exc_info=True
+        )
 
     _assert_schema_subset(Ticket, TicketRead)
     _assert_schema_subset(TicketProposal, ProposalRead)
