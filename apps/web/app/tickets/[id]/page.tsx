@@ -620,12 +620,6 @@ export default function TicketDetailPage() {
                         {existing.l3 && (
                           <Field label={`${prefix} L3`} value={existing.l3} />
                         )}
-                        {existing.node && (
-                          <Field
-                            label={`${prefix} Node`}
-                            value={existing.node}
-                          />
-                        )}
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">
