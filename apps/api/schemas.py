@@ -148,6 +148,13 @@ class TaxonomyRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class TaxonomyCreate(BaseModel):
+    l1: str | None = None
+    l2: str | None = None
+    l3: str | None = None
+    node: str | None = None
+
+
 # --- Taxonomy reference tables ---
 
 

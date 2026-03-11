@@ -1,12 +1,14 @@
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
 from db import get_db
 from models import (
+    Ticket,
     TaxonomyApplication,
     TaxonomyBusinessCategory,
     TaxonomyResolution,
@@ -18,6 +20,7 @@ from routes.tickets import get_effective_client_id
 from schemas import (
     TaxonomyApplicationRead,
     TaxonomyBusinessCategoryRead,
+    TaxonomyCreate,
     TaxonomyRead,
     TaxonomyResolutionRead,
     TaxonomyRootCauseRead,
@@ -121,3 +124,62 @@ async def list_root_cause(
 ):
     result = await db.execute(_client_filter(TaxonomyRootCause, client_id))
     return result.scalars().all()
+
+
+_VALID_TAXONOMY_TYPES = {"business_category", "application", "root_cause", "resolution"}
+
+
+@router.post(
+    "/taxonomies/tickets/{ticket_id}/{taxonomy_type}",
+    response_model=TaxonomyRead,
+    status_code=201,
+)
+async def set_ticket_taxonomy(
+    ticket_id: uuid.UUID,
+    taxonomy_type: str,
+    body: TaxonomyCreate,
+    db: AsyncSession = Depends(get_db),
+    client_id: uuid.UUID = Depends(get_effective_client_id),
+):
+    """Create or override a taxonomy assignment for a ticket. Marks the previous row inactive."""
+    if taxonomy_type not in _VALID_TAXONOMY_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid taxonomy_type. Must be one of: {sorted(_VALID_TAXONOMY_TYPES)}",
+        )
+    # Verify ticket belongs to this client
+    ticket_result = await db.execute(
+        select(Ticket).where(Ticket.ticket_id == ticket_id, Ticket.client_id == client_id)
+    )
+    if ticket_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    # Mark existing active taxonomy rows of this type as inactive
+    await db.execute(
+        update(TicketTaxonomy)
+        .where(
+            TicketTaxonomy.ticket_id == ticket_id,
+            TicketTaxonomy.client_id == client_id,
+            TicketTaxonomy.taxonomy_type == taxonomy_type,
+            TicketTaxonomy.is_active.is_(True),
+        )
+        .values(is_active=False)
+    )
+
+    # Insert new taxonomy row
+    new_taxonomy = TicketTaxonomy(
+        ticket_id=ticket_id,
+        client_id=client_id,
+        taxonomy_type=taxonomy_type,
+        l1=body.l1,
+        l2=body.l2,
+        l3=body.l3,
+        node=body.node,
+        source="user",
+        is_active=True,
+        taxonomy_assigned_at=datetime.now(timezone.utc),
+    )
+    db.add(new_taxonomy)
+    await db.commit()
+    await db.refresh(new_taxonomy)
+    return new_taxonomy
