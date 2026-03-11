@@ -259,10 +259,7 @@ function FilterPopoverContent({
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  const {
-    selectedClient,
-    error,
-  } = useClientContext();
+  const { selectedClient, error } = useClientContext();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketsError, setTicketsError] = useState<string | null>(null);
   const [ticketsLoading, setTicketsLoading] = useState(false);
@@ -500,10 +497,7 @@ export default function DashboardPage() {
                     <thead className="bg-gray-50">
                       <tr>
                         {showTestData && (
-                          <th
-                            scope="col"
-                            className="w-0 px-2 py-3"
-                          />
+                          <th scope="col" className="w-0 px-2 py-3" />
                         )}
                         <th
                           scope="col"

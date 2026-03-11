@@ -31,7 +31,10 @@ export function TopNav() {
       setEmail(data.session.user?.email ?? null);
       loadClients(data.session.access_token);
       try {
-        const me = await apiClient.get<{ role: string }>("/api/v1/me/role", data.session.access_token);
+        const me = await apiClient.get<{ role: string }>(
+          "/api/v1/me/role",
+          data.session.access_token,
+        );
         setRole(me.role);
       } catch {
         // no role assigned

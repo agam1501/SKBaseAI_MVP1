@@ -27,10 +27,25 @@ import type { UserRole } from "@/lib/types";
 
 const NAV_ITEMS = [
   { label: "Overview", href: "/overview", icon: BarChart2, roles: null },
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: null },
+  {
+    label: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    roles: null,
+  },
   { label: "Taxonomies", href: "/taxonomies", icon: Tag, roles: null },
-  { label: "Ingestion", href: "/ingestion", icon: Upload, roles: ["Admin", "Developer"] as UserRole["role"][] },
-  { label: "Users", href: "/users", icon: Users2, roles: ["Admin", "Developer"] as UserRole["role"][] },
+  {
+    label: "Ingestion",
+    href: "/ingestion",
+    icon: Upload,
+    roles: ["Admin", "Developer"] as UserRole["role"][],
+  },
+  {
+    label: "Users",
+    href: "/users",
+    icon: Users2,
+    roles: ["Admin", "Developer"] as UserRole["role"][],
+  },
 ];
 
 export function AppSidebar({
@@ -46,7 +61,10 @@ export function AppSidebar({
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) return;
       try {
-        const me = await apiClient.get<UserRole>("/api/v1/me/role", data.session.access_token);
+        const me = await apiClient.get<UserRole>(
+          "/api/v1/me/role",
+          data.session.access_token,
+        );
         setRole(me.role);
       } catch {
         // Default: no elevated role — hide gated items
@@ -78,7 +96,9 @@ export function AppSidebar({
           <SidebarGroupContent>
             <SidebarMenu>
               {visibleItems.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                const isActive =
+                  pathname === item.href ||
+                  pathname.startsWith(item.href + "/");
                 return (
                   <SidebarMenuItem key={item.href}>
                     <Tooltip>
@@ -90,7 +110,10 @@ export function AppSidebar({
                           </Link>
                         </SidebarMenuButton>
                       </TooltipTrigger>
-                      <TooltipContent side="right" className="group-data-[collapsible=icon]:block hidden">
+                      <TooltipContent
+                        side="right"
+                        className="group-data-[collapsible=icon]:block hidden"
+                      >
                         {item.label}
                       </TooltipContent>
                     </Tooltip>

@@ -26,7 +26,12 @@ const TAXONOMY_FIELD_PREFIX: Record<string, string> = {
   resolution: "Resolution",
 };
 
-const TAXONOMY_ORDER = ["business_category", "application", "root_cause", "resolution"];
+const TAXONOMY_ORDER = [
+  "business_category",
+  "application",
+  "root_cause",
+  "resolution",
+];
 
 function Field({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -75,7 +80,10 @@ export default function TicketDetailPage() {
         setTaxonomies(tax);
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
-        console.error("[taxonomy fetch]", msg, { ticketId: id, clientId: selectedClient.client_id });
+        console.error("[taxonomy fetch]", msg, {
+          ticketId: id,
+          clientId: selectedClient.client_id,
+        });
         setTaxonomyError(msg);
       }
     });
@@ -252,37 +260,56 @@ export default function TicketDetailPage() {
               </p>
             )}
             {!taxonomyError && taxonomies.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No taxonomies assigned yet.</p>
-            ) : !taxonomyError && (
-              <div className="space-y-5">
-                {TAXONOMY_ORDER.filter((type) =>
-                  taxonomies.some((t) => t.taxonomy_type === type)
-                ).map((type) => {
-                  const entries = taxonomies.filter((t) => t.taxonomy_type === type);
-                  return (
-                    <div key={type} className="space-y-2">
-                      <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                        {TAXONOMY_LABELS[type] ?? type}
-                      </p>
-                      {entries.map((t) => {
-                        const prefix = TAXONOMY_FIELD_PREFIX[type] ?? type;
-                        return (
-                          <div key={t.id} className="grid grid-cols-2 gap-x-4 gap-y-2">
-                            {t.l1 && <Field label={`${prefix} L1`} value={t.l1} />}
-                            {t.l2 && <Field label={`${prefix} L2`} value={t.l2} />}
-                            {t.l3 && <Field label={`${prefix} L3`} value={t.l3} />}
-                            {t.node && <Field label={`${prefix} Node`} value={t.node} />}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
+              <p className="text-sm text-muted-foreground">
+                No taxonomies assigned yet.
+              </p>
+            ) : (
+              !taxonomyError && (
+                <div className="space-y-5">
+                  {TAXONOMY_ORDER.filter((type) =>
+                    taxonomies.some((t) => t.taxonomy_type === type),
+                  ).map((type) => {
+                    const entries = taxonomies.filter(
+                      (t) => t.taxonomy_type === type,
+                    );
+                    return (
+                      <div key={type} className="space-y-2">
+                        <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                          {TAXONOMY_LABELS[type] ?? type}
+                        </p>
+                        {entries.map((t) => {
+                          const prefix = TAXONOMY_FIELD_PREFIX[type] ?? type;
+                          return (
+                            <div
+                              key={t.id}
+                              className="grid grid-cols-2 gap-x-4 gap-y-2"
+                            >
+                              {t.l1 && (
+                                <Field label={`${prefix} L1`} value={t.l1} />
+                              )}
+                              {t.l2 && (
+                                <Field label={`${prefix} L2`} value={t.l2} />
+                              )}
+                              {t.l3 && (
+                                <Field label={`${prefix} L3`} value={t.l3} />
+                              )}
+                              {t.node && (
+                                <Field
+                                  label={`${prefix} Node`}
+                                  value={t.node}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              )
             )}
           </CardContent>
         </Card>
-
       </div>
     </div>
   );
