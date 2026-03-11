@@ -239,9 +239,7 @@ export default function TicketDetailPage() {
       ]);
       cancelEditing();
     } catch (e: unknown) {
-      setSaveError(
-        e instanceof Error ? e.message : "Failed to save taxonomy",
-      );
+      setSaveError(e instanceof Error ? e.message : "Failed to save taxonomy");
     } finally {
       setSaving(false);
     }
@@ -402,9 +400,7 @@ export default function TicketDetailPage() {
                 const isEditing = editingType === type;
                 const prefix = TAXONOMY_FIELD_PREFIX[type] ?? type;
 
-                const l1Options = [
-                  ...new Set(refData.map((r) => r.l1)),
-                ].sort();
+                const l1Options = [...new Set(refData.map((r) => r.l1))].sort();
                 const l2Options = draftL1
                   ? [
                       ...new Set(
@@ -419,9 +415,7 @@ export default function TicketDetailPage() {
                     ? [
                         ...new Set(
                           refData
-                            .filter(
-                              (r) => r.l1 === draftL1 && r.l2 === draftL2,
-                            )
+                            .filter((r) => r.l1 === draftL1 && r.l2 === draftL2)
                             .map((r) => r.l3),
                         ),
                       ].sort()
@@ -487,9 +481,7 @@ export default function TicketDetailPage() {
                             <SelectTrigger className="h-8 text-sm">
                               <SelectValue
                                 placeholder={
-                                  draftL1
-                                    ? "Select L2…"
-                                    : "Select L1 first"
+                                  draftL1 ? "Select L2…" : "Select L1 first"
                                 }
                               />
                             </SelectTrigger>
@@ -515,9 +507,7 @@ export default function TicketDetailPage() {
                             <SelectTrigger className="h-8 text-sm">
                               <SelectValue
                                 placeholder={
-                                  draftL2
-                                    ? "Select L3…"
-                                    : "Select L2 first"
+                                  draftL2 ? "Select L3…" : "Select L2 first"
                                 }
                               />
                             </SelectTrigger>
