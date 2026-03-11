@@ -195,11 +195,9 @@ export default function TicketDetailPage() {
       const results = await Promise.all(
         TAXONOMY_ORDER.map((type) =>
           apiClient
-            .get<unknown[]>(
-              `/api/v1/taxonomies/${TAXONOMY_REF_PATH[type]}`,
-              token,
-              { clientId: selectedClient?.client_id },
-            )
+            .get<
+              unknown[]
+            >(`/api/v1/taxonomies/${TAXONOMY_REF_PATH[type]}`, token, { clientId: selectedClient?.client_id })
             .then((raw) => ({ type, options: normalizeRefData(type, raw) })),
         ),
       );
@@ -221,9 +219,7 @@ export default function TicketDetailPage() {
           const existingL3 = existing?.l3 ?? "";
           const l3Match = options.some(
             (r) =>
-              r.l1 === existingL1 &&
-              r.l2 === existingL2 &&
-              r.l3 === existingL3,
+              r.l1 === existingL1 && r.l2 === existingL2 && r.l3 === existingL3,
           );
           newDraftByType[type] = {
             l1: existingL1,
@@ -269,9 +265,7 @@ export default function TicketDetailPage() {
     const token = data.session?.access_token;
     if (!token) return;
 
-    const typesToSave = TAXONOMY_ORDER.filter(
-      (type) => draftByType[type]?.l1,
-    );
+    const typesToSave = TAXONOMY_ORDER.filter((type) => draftByType[type]?.l1);
     if (typesToSave.length === 0) {
       cancelEditing();
       return;
@@ -285,8 +279,7 @@ export default function TicketDetailPage() {
           const draft = draftByType[type];
           const options = refByType[type] ?? [];
           const match = options.find(
-            (r) =>
-              r.l1 === draft.l1 && r.l2 === draft.l2 && r.l3 === draft.l3,
+            (r) => r.l1 === draft.l1 && r.l2 === draft.l2 && r.l3 === draft.l3,
           );
           return apiClient.post<Taxonomy>(
             `/api/v1/taxonomies/tickets/${id}/${type}`,
