@@ -175,16 +175,19 @@ export default function IngestionPage() {
                         {uploadResult.created !== 1 ? "s" : ""}.
                       </p>
                     )}
-                    {uploadResult.warnings && uploadResult.warnings.length > 0 && (
-                      <div>
-                        <p className="text-amber-700 font-medium">Warnings:</p>
-                        <ul className="list-disc list-inside text-amber-800 mt-0.5">
-                          {uploadResult.warnings.map((w, i) => (
-                            <li key={i}>{w}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    {uploadResult.warnings &&
+                      uploadResult.warnings.length > 0 && (
+                        <div>
+                          <p className="text-amber-700 font-medium">
+                            Warnings:
+                          </p>
+                          <ul className="list-disc list-inside text-amber-800 mt-0.5">
+                            {uploadResult.warnings.map((w, i) => (
+                              <li key={i}>{w}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     {uploadResult.errors.length > 0 && (
                       <div>
                         <p className="text-amber-700 font-medium">
