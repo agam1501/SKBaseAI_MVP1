@@ -50,7 +50,7 @@ async function proxy(
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const url = `${API_BASE_URL}/api/v1/${pathSegments.join("/")}`;
+  const url = `${API_BASE_URL}/api/v1/${pathSegments.join("/")}${req.nextUrl.search}`;
   const clientId = req.headers.get("x-client-id");
   const headers: Record<string, string> = {
     Authorization: `Bearer ${session.access_token}`,
@@ -80,11 +80,10 @@ async function proxy(
     );
   }
 
-  const contentType = res.headers.get("content-type");
   const text = await res.text();
-  if (!contentType?.includes("application/json") || !text) {
+  if (!text) {
     return NextResponse.json(
-      { detail: "Backend returned non-JSON or empty response" },
+      { detail: "Backend returned empty response" },
       { status: 502 },
     );
   }
@@ -92,10 +91,8 @@ async function proxy(
   try {
     data = JSON.parse(text);
   } catch {
-    return NextResponse.json(
-      { detail: "Backend returned invalid JSON" },
-      { status: 502 },
-    );
+    // Non-JSON backend response (e.g. uvicorn plain-text 500) — pass through as-is
+    return new NextResponse(text, { status: res.status });
   }
   return NextResponse.json(data, { status: res.status });
 }

@@ -255,3 +255,14 @@ class CrossTabMatrix(BaseModel):
     business_l1s: list[str]
     application_l1s: list[str]
     counts: list[CrossTabRow]
+
+
+class MonthlyTicketStat(BaseModel):
+    month: str  # "YYYY-MM"
+    opened: int
+    closed: int
+    avg_mttr_hours: float | None  # None if no tickets resolved that month
+
+
+class MonthlyTicketStatsResponse(BaseModel):
+    stats: list[MonthlyTicketStat]
