@@ -26,6 +26,7 @@ export type TicketUploadRowError = { row: number; message: string };
 export type TicketUploadResult = {
   created: number;
   errors: TicketUploadRowError[];
+  warnings?: string[];
 };
 
 function buildHeaders(

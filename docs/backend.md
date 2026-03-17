@@ -104,6 +104,36 @@ Tickets can be marked as test data to isolate them from production views.
 - **List** (`GET /tickets?is_test=false`): filter by test flag — omit the param to return all tickets
 - **Frontend**: dashboard has a "Show test data" toggle (default off); test tickets show a TEST badge; upload page has a "Mark as test data" checkbox
 
+### CSV format and constraints (`POST /tickets/upload`)
+
+**Required columns** (HTTP 400 if missing from header row):
+
+| Column | Description |
+|---|---|
+| `short_desc` | Short description of the ticket (non-empty) |
+| `status` | Must be `OPEN` or `CLOSED` (case-insensitive); any other value is a row-level error |
+| `source_system` | Source system identifier |
+| `external_id` | Ticket ID in the originating system |
+
+**Optional columns** (silently set to `null` if absent or blank):
+`full_desc`, `resolution`, `root_cause`, `priority`
+
+**Other rules:**
+- Unknown column names are ignored with a non-fatal warning returned in the response
+- Duplicate `external_id` values within the same file: later rows are rejected with a row-level error
+- File size limit: **5 MB**
+- Row limit: **5 000 rows** per upload (split larger files)
+- Empty CSV (header only, no data rows) → HTTP 400
+
+**Response shape** (`TicketUploadResult`):
+```json
+{
+  "created": 42,
+  "errors": [{ "row": 5, "message": "status 'Pending' is not valid; expected OPEN or CLOSED" }],
+  "warnings": ["Unrecognised column(s) ignored: ['ticket_notes']"]
+}
+```
+
 ## Analytics Endpoints
 
 | Method | Path | Description |

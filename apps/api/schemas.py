@@ -98,6 +98,7 @@ class TicketUploadRowError(BaseModel):
 class TicketUploadResult(BaseModel):
     created: int
     errors: list[TicketUploadRowError]
+    warnings: list[str] = []
 
 
 # --- Proposals ---

@@ -76,6 +76,21 @@ def _norm(s: str | None) -> str | None:
     return t if t else None
 
 
+REQUIRED_COLUMNS = {"short_desc", "status", "source_system", "external_id"}
+EXPECTED_COLUMNS = {
+    "short_desc",
+    "full_desc",
+    "external_id",
+    "source_system",
+    "resolution",
+    "root_cause",
+    "priority",
+    "status",
+}
+MAX_CSV_BYTES = 5 * 1024 * 1024  # 5 MB
+MAX_ROWS = 5_000
+
+
 def _row_to_payload(row: dict[str, str]) -> tuple[dict | None, str | None]:
     """Build a dict suitable for TicketCreate from a CSV row. Returns (payload, error_message)."""
     # Normalize keys to lower for lookup
@@ -95,6 +110,8 @@ def _row_to_payload(row: dict[str, str]) -> tuple[dict | None, str | None]:
         u = status_raw.upper()
         if u in ("OPEN", "CLOSED"):
             status = TicketStatus.OPEN if u == "OPEN" else TicketStatus.CLOSED
+        else:
+            return None, f"status '{status_raw}' is not valid; expected OPEN or CLOSED"
     is_resolved = status == TicketStatus.CLOSED if status is not None else False
     payload = {
         "short_desc": short_desc,
@@ -120,23 +137,68 @@ async def upload_tickets_csv(
     """Parse CSV in memory, validate each row with TicketCreate, insert valid rows."""
     if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="File must be a CSV (filename ending in .csv)")
-    content = await file.read()
+
+    # File size cap
+    content = await file.read(MAX_CSV_BYTES + 1)
+    if len(content) > MAX_CSV_BYTES:
+        raise HTTPException(
+            status_code=400, detail=f"CSV file exceeds {MAX_CSV_BYTES // (1024 * 1024)} MB limit"
+        )
+
     try:
         text = content.decode("utf-8", errors="replace")
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"File could not be decoded as UTF-8: {e}"
         ) from e
+
     reader = csv.DictReader(io.StringIO(text))
     if reader.fieldnames is None:
         raise HTTPException(status_code=400, detail="CSV has no header row")
+
+    # Header validation
+    fieldnames_lower = {f.strip().lower() for f in reader.fieldnames if f}
+    missing = REQUIRED_COLUMNS - fieldnames_lower
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"CSV is missing required columns: {sorted(missing)}",
+        )
+    unknown = fieldnames_lower - EXPECTED_COLUMNS
+    upload_warnings: list[str] = (
+        [f"Unrecognised column(s) ignored: {sorted(unknown)}"] if unknown else []
+    )
+
     errors: list[TicketUploadRowError] = []
     tickets_to_add: list[Ticket] = []
+    seen_ext_ids: dict[str, int] = {}  # external_id → first row number seen
+
     for row_index, row in enumerate(reader, start=2):
+        # Row count cap (count attempted rows, not just successes)
+        if row_index - 1 > MAX_ROWS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"CSV contains more than {MAX_ROWS} rows; split into smaller files",
+            )
+
         payload, row_error = _row_to_payload(row)
         if row_error:
             errors.append(TicketUploadRowError(row=row_index, message=row_error))
             continue
+
+        # Intra-batch duplicate external_id check
+        ext_id = payload.get("external_id")
+        if ext_id is not None:
+            if ext_id in seen_ext_ids:
+                errors.append(
+                    TicketUploadRowError(
+                        row=row_index,
+                        message=f"external_id '{ext_id}' already seen at row {seen_ext_ids[ext_id]}",
+                    )
+                )
+                continue
+            seen_ext_ids[ext_id] = row_index
+
         try:
             body = TicketCreate(**payload)
         except ValidationError as e:
@@ -146,16 +208,22 @@ async def upload_tickets_csv(
         data = body.model_dump()
         data["is_test"] = is_test
         tickets_to_add.append(Ticket(client_id=client_id, **data))
+
+    # Empty CSV (header only, no data rows)
+    if not tickets_to_add and not errors:
+        raise HTTPException(status_code=400, detail="CSV contains no data rows")
+
     if not tickets_to_add:
-        result = TicketUploadResult(created=0, errors=errors)
+        result = TicketUploadResult(created=0, errors=errors, warnings=upload_warnings)
         return JSONResponse(content=result.model_dump(), status_code=422)
+
     db.add_all(tickets_to_add)
     try:
         await db.commit()
     except Exception as exc:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Bulk insert failed: {exc}") from exc
-    return TicketUploadResult(created=len(tickets_to_add), errors=errors)
+    return TicketUploadResult(created=len(tickets_to_add), errors=errors, warnings=upload_warnings)
 
 
 @router.get("/tickets", response_model=list[TicketRead])
