@@ -117,7 +117,9 @@ export default function AnalyticsPage() {
       );
       setStats(result.stats);
     } catch (e: unknown) {
-      setFetchError(e instanceof Error ? e.message : "Failed to load analytics.");
+      setFetchError(
+        e instanceof Error ? e.message : "Failed to load analytics.",
+      );
     } finally {
       setLoading(false);
     }
@@ -199,7 +201,9 @@ export default function AnalyticsPage() {
           <CardContent>
             {!hasData && !loading && (
               <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
-                {stats ? "No data for this range." : "Select a company and date range, then click Apply."}
+                {stats
+                  ? "No data for this range."
+                  : "Select a company and date range, then click Apply."}
               </div>
             )}
 
@@ -209,7 +213,11 @@ export default function AnalyticsPage() {
                   data={stats}
                   margin={{ top: 8, right: 40, left: 0, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#e5e7eb"
+                    vertical={false}
+                  />
                   <XAxis
                     dataKey="month"
                     tick={{ fontSize: 12, fill: "#6b7280" }}
@@ -245,7 +253,10 @@ export default function AnalyticsPage() {
                       style: { fontSize: 11, fill: "#9ca3af" },
                     }}
                   />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f3f4f6" }} />
+                  <Tooltip
+                    content={<CustomTooltip />}
+                    cursor={{ fill: "#f3f4f6" }}
+                  />
                   <Legend
                     wrapperStyle={{ fontSize: 13, paddingTop: 16 }}
                     iconType="circle"

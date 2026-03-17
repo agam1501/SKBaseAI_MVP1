@@ -5,7 +5,14 @@ import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { BarChart2, LayoutDashboard, Tag, TrendingUp, Upload, Users2 } from "lucide-react";
+import {
+  BarChart2,
+  LayoutDashboard,
+  Tag,
+  TrendingUp,
+  Upload,
+  Users2,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
