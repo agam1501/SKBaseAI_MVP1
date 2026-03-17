@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, func, literal_column, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
@@ -115,7 +115,7 @@ async def monthly_ticket_stats(
     # Query opened tickets grouped by month
     opened_result = await db.execute(
         select(
-            func.to_char(Ticket.created_at, "YYYY-MM").label("month"),
+            func.to_char(Ticket.created_at, literal_column("'YYYY-MM'")).label("month"),
             func.count().label("count"),
         )
         .where(
@@ -123,14 +123,14 @@ async def monthly_ticket_stats(
             Ticket.created_at >= start_dt,
             Ticket.created_at < end_exclusive,
         )
-        .group_by(func.to_char(Ticket.created_at, "YYYY-MM"))
+        .group_by(func.to_char(Ticket.created_at, literal_column("'YYYY-MM'")))
     )
     opened_by_month = {r.month: r.count for r in opened_result.all()}
 
     # Query closed tickets grouped by month (by resolved_at), with avg MTTR
     closed_result = await db.execute(
         select(
-            func.to_char(Ticket.resolved_at, "YYYY-MM").label("month"),
+            func.to_char(Ticket.resolved_at, literal_column("'YYYY-MM'")).label("month"),
             func.count().label("count"),
             func.avg(
                 func.date_part("epoch", Ticket.resolved_at - Ticket.created_at) / 3600.0
@@ -143,7 +143,7 @@ async def monthly_ticket_stats(
             Ticket.resolved_at >= start_dt,
             Ticket.resolved_at < end_exclusive,
         )
-        .group_by(func.to_char(Ticket.resolved_at, "YYYY-MM"))
+        .group_by(func.to_char(Ticket.resolved_at, literal_column("'YYYY-MM'")))
     )
     closed_rows = {r.month: (r.count, r.avg_mttr_hours) for r in closed_result.all()}
 

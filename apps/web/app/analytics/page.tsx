@@ -184,7 +184,8 @@ export default function AnalyticsPage() {
             )}
 
             {hasData && (
-              <ResponsiveContainer width="100%" height={400}>
+              <div className="overflow-x-auto">
+              <ResponsiveContainer width="100%" height={400} minWidth={Math.max(stats.length * 80, 500)}>
                 <ComposedChart
                   data={stats}
                   margin={{ top: 8, right: 40, left: 0, bottom: 0 }}
@@ -265,6 +266,7 @@ export default function AnalyticsPage() {
                   />
                 </ComposedChart>
               </ResponsiveContainer>
+              </div>
             )}
           </CardContent>
         </Card>
