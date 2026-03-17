@@ -8,13 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -79,9 +72,8 @@ function CustomTooltip({
 
 export default function AnalyticsPage() {
   const supabase = useMemo(() => createClient(), []);
-  const { clients } = useClientContext();
+  const { selectedClient } = useClientContext();
 
-  const [localClientId, setLocalClientId] = useState<string>("");
   const [startMonth, setStartMonth] = useState(defaultStartMonth());
   const [endMonth, setEndMonth] = useState(defaultEndMonth());
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -90,8 +82,8 @@ export default function AnalyticsPage() {
   const [stats, setStats] = useState<MonthlyTicketStat[] | null>(null);
 
   async function handleApply() {
-    if (!localClientId) {
-      setValidationError("Please select a company.");
+    if (!selectedClient) {
+      setValidationError("Select a company from the top bar first.");
       return;
     }
     if (startMonth > endMonth) {
@@ -113,7 +105,7 @@ export default function AnalyticsPage() {
       const result = await apiClient.get<{ stats: MonthlyTicketStat[] }>(
         `/api/v1/analytics/tickets/monthly-stats?start_month=${startMonth}&end_month=${endMonth}`,
         token,
-        { clientId: localClientId },
+        { clientId: selectedClient.client_id },
       );
       setStats(result.stats);
     } catch (e: unknown) {
@@ -140,23 +132,7 @@ export default function AnalyticsPage() {
         {/* Controls */}
         <Card>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
-              <div className="space-y-1.5">
-                <Label htmlFor="client-select">Company</Label>
-                <Select value={localClientId} onValueChange={setLocalClientId}>
-                  <SelectTrigger id="client-select">
-                    <SelectValue placeholder="Select company…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map((c) => (
-                      <SelectItem key={c.client_id} value={c.client_id}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
               <div className="space-y-1.5">
                 <Label htmlFor="start-month">Start month</Label>
                 <Input
@@ -203,7 +179,7 @@ export default function AnalyticsPage() {
               <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
                 {stats
                   ? "No data for this range."
-                  : "Select a company and date range, then click Apply."}
+                  : "Select a company from the top bar, set a date range, then click Apply."}
               </div>
             )}
 

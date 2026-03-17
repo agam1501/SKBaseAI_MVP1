@@ -50,7 +50,7 @@ async function proxy(
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const url = `${API_BASE_URL}/api/v1/${pathSegments.join("/")}`;
+  const url = `${API_BASE_URL}/api/v1/${pathSegments.join("/")}${req.nextUrl.search}`;
   const clientId = req.headers.get("x-client-id");
   const headers: Record<string, string> = {
     Authorization: `Bearer ${session.access_token}`,
