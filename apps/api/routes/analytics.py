@@ -152,7 +152,9 @@ async def monthly_ticket_stats(
             month=month,
             opened=opened_by_month.get(month, 0),
             closed=closed_rows.get(month, (0, None))[0],
-            avg_mttr_hours=round(float(closed_rows[month][1]), 2) if month in closed_rows and closed_rows[month][1] is not None else None,
+            avg_mttr_hours=round(float(closed_rows[month][1]), 2)
+            if month in closed_rows and closed_rows[month][1] is not None
+            else None,
         )
         for month in all_months
     ]
