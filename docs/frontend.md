@@ -15,6 +15,7 @@ apps/web/
 │   ├── layout.tsx              # Root layout — wraps children in ClientProvider + AppShell
 │   ├── page.tsx                # Redirects / → /dashboard
 │   ├── login/page.tsx          # Email/password sign in + sign up
+│   ├── analytics/page.tsx      # Month range picker + ComposedChart (opened/closed bars + MTTR line)
 │   ├── overview/page.tsx       # Cross-tab matrix: Application L1 (rows) × Business L1 (columns)
 │   ├── dashboard/page.tsx      # Ticket table with search, sort, filter, clickable rows
 │   ├── ingestion/
@@ -81,6 +82,7 @@ All pages except `/login` are wrapped in `AppShell`, which renders:
 | Item | Route | Visible to |
 |---|---|---|
 | Overview | `/overview` | All roles |
+| Analytics | `/analytics` | All roles |
 | Dashboard | `/dashboard` | All roles |
 | Taxonomies | `/taxonomies` | All roles |
 | Ingestion | `/ingestion` | Admin, Developer |
@@ -127,6 +129,42 @@ The backend fetches **all L1 values from the taxonomy reference tables** (not ju
 | Application filter (text input) | Filters visible rows by substring match on Application L1 name; totals update live |
 | Vertical scroll | Table body scrolls within a `max-h-[480px]` container; header and totals row remain fixed |
 | Horizontal scroll | Outer container scrolls horizontally when columns overflow |
+
+---
+
+## Analytics Page
+
+`app/analytics/page.tsx` shows ticket volume and resolution speed over a user-selected
+date range.
+
+### Controls
+
+| Control | Behaviour |
+|---|---|
+| Start / End month inputs | `<Input type="month">` for YYYY-MM range; client-side validation rejects `start > end` before fetching |
+| Apply button | Triggers fetch; disabled while loading |
+| Company | Comes from the global `ClientContext` (TopNav selector); no local selector |
+
+### Chart
+
+Built with [recharts](https://recharts.org/) `ComposedChart`:
+
+| Series | Type | Y-axis | Color |
+|---|---|---|---|
+| Opened | `<Bar>` | Left (ticket count) | Indigo `#6366f1` |
+| Closed | `<Bar>` | Left (ticket count) | Emerald `#10b981` |
+| Avg MTTR (hrs) | `<Line>` | Right (hours) | Amber `#f59e0b` |
+
+- Custom tooltip: appears on hover showing opened count, closed count, and MTTR for that month
+- Horizontal scroll: chart container is `overflow-x-auto`; chart `minWidth` scales at 80px per month (minimum 500px) so x-axis labels never overlap for long ranges
+
+### Data source
+
+`GET /api/v1/analytics/tickets/monthly-stats?start_month=YYYY-MM&end_month=YYYY-MM`
+
+Returns a `MonthlyTicketStatsResponse` with one `MonthlyTicketStat` per month in the
+range, including months with zero tickets. `avg_mttr_hours` is `null` for months with
+no resolved tickets.
 
 ---
 

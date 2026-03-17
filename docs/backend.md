@@ -18,7 +18,7 @@ apps/api/
 ├── models.py        # SQLAlchemy ORM models matching Supabase schema
 ├── schemas.py       # Pydantic request/response models
 ├── routes/
-│   ├── analytics.py # GET /analytics/cross-tab/business-application
+│   ├── analytics.py # GET /analytics/cross-tab/business-application, GET /analytics/tickets/monthly-stats
 │   ├── clients.py   # GET /me/role, GET /clients, POST /clients, POST /clients/{id}/join
 │   ├── tickets.py   # POST /tickets, GET /tickets, GET /tickets/{id}, PATCH /tickets/{id}/status, POST /tickets/upload
 │   ├── proposals.py # GET /proposals/tickets/{id}/latest, POST /proposals/{id}/feedback
@@ -109,6 +109,7 @@ Tickets can be marked as test data to isolate them from production views.
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/analytics/cross-tab/business-application` | Returns a full Business L1 × Application L1 cross-tab matrix |
+| `GET` | `/analytics/tickets/monthly-stats` | Per-month opened/closed ticket counts and average MTTR (hours) for a client. Query params: `start_month` (YYYY-MM), `end_month` (YYYY-MM). Max range: 24 months. |
 
 ### Cross-tab matrix (`CrossTabMatrix`)
 
@@ -153,6 +154,8 @@ Response shape:
 | `TaxonomyRootCauseRead` | `TaxonomyRootCause` | GET /taxonomies/root-cause |
 | `CrossTabRow` | — | One non-zero cell in the cross-tab matrix |
 | `CrossTabMatrix` | — | Full response for `GET /analytics/cross-tab/business-application` |
+| `MonthlyTicketStat` | — | One month's opened count, closed count, and avg MTTR (hours or null) |
+| `MonthlyTicketStatsResponse` | — | Full response for `GET /analytics/tickets/monthly-stats` |
 
 All taxonomy reference schemas include: `id`, `client_id`, hierarchy fields (e.g. `l1`, `l2`, `l3` or `l1_outcome`/`l2_action_type`/`l3_resolution_code`), `is_active`, `created_at`, `updated_at`, plus type-specific fields (e.g. `node`, `label`, `keywords` for business category; `resolution_code`, `definition` for resolution). See `apps/api/schemas.py` and `apps/api/models.py` for full field lists.
 
