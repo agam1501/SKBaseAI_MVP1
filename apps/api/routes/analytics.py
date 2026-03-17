@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_, extract, func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
@@ -133,7 +133,7 @@ async def monthly_ticket_stats(
             func.to_char(Ticket.resolved_at, "YYYY-MM").label("month"),
             func.count().label("count"),
             func.avg(
-                extract("epoch", Ticket.resolved_at - Ticket.created_at) / 3600
+                func.date_part("epoch", Ticket.resolved_at - Ticket.created_at) / 3600.0
             ).label("avg_mttr_hours"),
         )
         .where(
@@ -152,7 +152,7 @@ async def monthly_ticket_stats(
             month=month,
             opened=opened_by_month.get(month, 0),
             closed=closed_rows.get(month, (0, None))[0],
-            avg_mttr_hours=round(closed_rows[month][1], 2) if month in closed_rows and closed_rows[month][1] is not None else None,
+            avg_mttr_hours=round(float(closed_rows[month][1]), 2) if month in closed_rows and closed_rows[month][1] is not None else None,
         )
         for month in all_months
     ]
