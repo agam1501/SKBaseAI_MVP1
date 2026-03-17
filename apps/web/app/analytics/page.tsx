@@ -185,87 +185,91 @@ export default function AnalyticsPage() {
 
             {hasData && (
               <div className="overflow-x-auto">
-              <ResponsiveContainer width="100%" height={400} minWidth={Math.max(stats.length * 80, 500)}>
-                <ComposedChart
-                  data={stats}
-                  margin={{ top: 8, right: 40, left: 0, bottom: 0 }}
+                <ResponsiveContainer
+                  width="100%"
+                  height={400}
+                  minWidth={Math.max(stats.length * 80, 500)}
                 >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#e5e7eb"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fontSize: 12, fill: "#6b7280" }}
-                    tickLine={false}
-                    axisLine={{ stroke: "#e5e7eb" }}
-                  />
-                  <YAxis
-                    yAxisId="tickets"
-                    allowDecimals={false}
-                    tick={{ fontSize: 12, fill: "#6b7280" }}
-                    tickLine={false}
-                    axisLine={false}
-                    label={{
-                      value: "Tickets",
-                      angle: -90,
-                      position: "insideLeft",
-                      offset: 10,
-                      style: { fontSize: 11, fill: "#9ca3af" },
-                    }}
-                  />
-                  <YAxis
-                    yAxisId="mttr"
-                    orientation="right"
-                    tick={{ fontSize: 12, fill: "#6b7280" }}
-                    tickLine={false}
-                    axisLine={false}
-                    unit="h"
-                    label={{
-                      value: "MTTR (hrs)",
-                      angle: 90,
-                      position: "insideRight",
-                      offset: 10,
-                      style: { fontSize: 11, fill: "#9ca3af" },
-                    }}
-                  />
-                  <Tooltip
-                    content={<CustomTooltip />}
-                    cursor={{ fill: "#f3f4f6" }}
-                  />
-                  <Legend
-                    wrapperStyle={{ fontSize: 13, paddingTop: 16 }}
-                    iconType="circle"
-                  />
-                  <Bar
-                    yAxisId="tickets"
-                    dataKey="opened"
-                    name="Opened"
-                    fill="#6366f1"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={40}
-                  />
-                  <Bar
-                    yAxisId="tickets"
-                    dataKey="closed"
-                    name="Closed"
-                    fill="#10b981"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={40}
-                  />
-                  <Line
-                    yAxisId="mttr"
-                    dataKey="avg_mttr_hours"
-                    name="Avg MTTR (hrs)"
-                    stroke="#f59e0b"
-                    strokeWidth={2.5}
-                    dot={{ r: 4, fill: "#f59e0b", strokeWidth: 0 }}
-                    activeDot={{ r: 6 }}
-                    connectNulls={false}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
+                  <ComposedChart
+                    data={stats}
+                    margin={{ top: 8, right: 40, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#e5e7eb"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 12, fill: "#6b7280" }}
+                      tickLine={false}
+                      axisLine={{ stroke: "#e5e7eb" }}
+                    />
+                    <YAxis
+                      yAxisId="tickets"
+                      allowDecimals={false}
+                      tick={{ fontSize: 12, fill: "#6b7280" }}
+                      tickLine={false}
+                      axisLine={false}
+                      label={{
+                        value: "Tickets",
+                        angle: -90,
+                        position: "insideLeft",
+                        offset: 10,
+                        style: { fontSize: 11, fill: "#9ca3af" },
+                      }}
+                    />
+                    <YAxis
+                      yAxisId="mttr"
+                      orientation="right"
+                      tick={{ fontSize: 12, fill: "#6b7280" }}
+                      tickLine={false}
+                      axisLine={false}
+                      unit="h"
+                      label={{
+                        value: "MTTR (hrs)",
+                        angle: 90,
+                        position: "insideRight",
+                        offset: 10,
+                        style: { fontSize: 11, fill: "#9ca3af" },
+                      }}
+                    />
+                    <Tooltip
+                      content={<CustomTooltip />}
+                      cursor={{ fill: "#f3f4f6" }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: 13, paddingTop: 16 }}
+                      iconType="circle"
+                    />
+                    <Bar
+                      yAxisId="tickets"
+                      dataKey="opened"
+                      name="Opened"
+                      fill="#6366f1"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={40}
+                    />
+                    <Bar
+                      yAxisId="tickets"
+                      dataKey="closed"
+                      name="Closed"
+                      fill="#10b981"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={40}
+                    />
+                    <Line
+                      yAxisId="mttr"
+                      dataKey="avg_mttr_hours"
+                      name="Avg MTTR (hrs)"
+                      stroke="#f59e0b"
+                      strokeWidth={2.5}
+                      dot={{ r: 4, fill: "#f59e0b", strokeWidth: 0 }}
+                      activeDot={{ r: 6 }}
+                      connectNulls={false}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
               </div>
             )}
           </CardContent>
