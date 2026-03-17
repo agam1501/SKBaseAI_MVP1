@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { BarChart2, LayoutDashboard, Tag, Upload, Users2 } from "lucide-react";
+import { BarChart2, LayoutDashboard, Tag, TrendingUp, Upload, Users2 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +27,7 @@ import type { UserRole } from "@/lib/types";
 
 const NAV_ITEMS = [
   { label: "Overview", href: "/overview", icon: BarChart2, roles: null },
+  { label: "Analytics", href: "/analytics", icon: TrendingUp, roles: null },
   {
     label: "Dashboard",
     href: "/dashboard",

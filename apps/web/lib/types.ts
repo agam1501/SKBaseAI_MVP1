@@ -88,6 +88,13 @@ export type TaxonomyResolution = {
   usage_guidance: string | null;
 };
 
+export type MonthlyTicketStat = {
+  month: string; // "YYYY-MM"
+  opened: number;
+  closed: number;
+  avg_mttr_hours: number | null;
+};
+
 export type TaxonomyRootCause = {
   id: string;
   client_id: string | null;
