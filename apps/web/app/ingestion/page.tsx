@@ -204,7 +204,9 @@ export default function IngestionPage() {
                         <ul className="list-disc list-inside text-amber-700 space-y-0.5">
                           {uploadResult.errors.map((err, i) => (
                             <li key={i}>
-                              <span className="font-medium">Row {err.row}:</span>{" "}
+                              <span className="font-medium">
+                                Row {err.row}:
+                              </span>{" "}
                               {err.message}
                             </li>
                           ))}
