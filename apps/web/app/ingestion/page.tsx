@@ -164,26 +164,50 @@ export default function IngestionPage() {
                 </Button>
 
                 {uploadError && (
-                  <p className="text-sm text-destructive">{uploadError}</p>
+                  <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm">
+                    <p className="font-semibold text-destructive mb-0.5">
+                      Upload failed
+                    </p>
+                    <p className="text-destructive/90">{uploadError}</p>
+                  </div>
                 )}
 
                 {uploadResult && (
-                  <div className="text-sm space-y-1">
+                  <div className="space-y-3 text-sm">
                     {uploadResult.created > 0 && (
-                      <p className="text-green-700 font-medium">
-                        Created {uploadResult.created} ticket
-                        {uploadResult.created !== 1 ? "s" : ""}.
-                      </p>
-                    )}
-                    {uploadResult.errors.length > 0 && (
-                      <div>
-                        <p className="text-amber-700 font-medium">
-                          Row errors:
+                      <div className="rounded-md border border-green-300 bg-green-50 px-4 py-3">
+                        <p className="font-semibold text-green-800">
+                          {uploadResult.created} ticket
+                          {uploadResult.created !== 1 ? "s" : ""} created
+                          successfully.
                         </p>
-                        <ul className="list-disc list-inside text-amber-800 mt-0.5">
+                      </div>
+                    )}
+                    {uploadResult.warnings &&
+                      uploadResult.warnings.length > 0 && (
+                        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3">
+                          <p className="font-semibold text-amber-800 mb-1">
+                            Warnings
+                          </p>
+                          <ul className="list-disc list-inside text-amber-700 space-y-0.5">
+                            {uploadResult.warnings.map((w, i) => (
+                              <li key={i}>{w}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    {uploadResult.errors.length > 0 && (
+                      <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3">
+                        <p className="font-semibold text-amber-800 mb-1">
+                          Row errors ({uploadResult.errors.length})
+                        </p>
+                        <ul className="list-disc list-inside text-amber-700 space-y-0.5">
                           {uploadResult.errors.map((err, i) => (
                             <li key={i}>
-                              Row {err.row}: {err.message}
+                              <span className="font-medium">
+                                Row {err.row}:
+                              </span>{" "}
+                              {err.message}
                             </li>
                           ))}
                         </ul>
