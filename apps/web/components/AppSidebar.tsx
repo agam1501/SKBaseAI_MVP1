@@ -4,7 +4,7 @@ import { apiClient } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart2,
   LayoutDashboard,
@@ -62,10 +62,14 @@ export function AppSidebar({
   onResizeStart: (e: React.MouseEvent) => void;
 }) {
   const pathname = usePathname();
-  const supabase = useMemo(() => createClient(), []);
+  const [supabase, setSupabase] = useState<ReturnType<typeof createClient> | null>(null);
+  useEffect(() => {
+    setSupabase(createClient());
+  }, []);
   const [role, setRole] = useState<UserRole["role"] | null>(null);
 
   useEffect(() => {
+    if (!supabase) return;
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) return;
       try {
