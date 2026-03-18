@@ -1,3 +1,8 @@
+---
+name: skbaseai-deployment
+description: Railway (backend) and Vercel (frontend) deployment config, all environment variables, local dev setup, and the enrichment kill switch for SKBaseAI. Use when deploying, configuring env vars, setting up a local environment, or toggling the enrichment pipeline.
+---
+
 # Deployment
 
 ## Backend → Railway
@@ -7,7 +12,8 @@
 **Config**: `apps/api/railway.toml`
 
 ### Environment Variables (Railway Dashboard)
-| Variable | Value |
+
+| Variable | Value / Notes |
 |---|---|
 | `DATABASE_URL` | `postgresql+asyncpg://postgres.<ref>:<password>@aws-0-us-west-2.pooler.supabase.com:6543/postgres` |
 | `SUPABASE_URL` | `https://<ref>.supabase.co` |
@@ -20,11 +26,19 @@
 | `REDIS_URL` | Redis connection string — only needed when ARQ worker is deployed |
 | `OPENAI_API_KEY` | Required when enrichment is enabled |
 
+> **Important**: `ENABLE_ENRICHMENT` is read by Pydantic settings at startup from this env var. Setting it to `false` in Railway and redeploying disables enrichment with no code change needed.
+
 ### Deploy
 ```bash
 cd apps/api
 railway up --detach
 ```
+
+### ARQ Worker (future — when enrichment branch is merged)
+The worker runs as a **separate Railway service** pointing at the same repo:
+- Start command: `arq apps/api/worker.WorkerSettings`
+- Needs: `REDIS_URL`, `DATABASE_URL`, `OPENAI_API_KEY`
+- Add `REDIS_URL` to the API service too so it can enqueue jobs
 
 ---
 
@@ -35,11 +49,12 @@ railway up --detach
 **Config**: `apps/web/vercel.json`
 
 ### Environment Variables (Vercel Dashboard or CLI)
+
 | Variable | Value |
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://<ref>.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | from Supabase → Settings → API |
-| `RAILWAY_API_URL` | Backend API base URL (e.g. Railway) — server-only, used by BFF proxy |
+| `RAILWAY_API_URL` | Backend API base URL — server-only, used by BFF proxy |
 
 ```bash
 vercel env add NEXT_PUBLIC_SUPABASE_URL production --value "..."
@@ -60,6 +75,7 @@ vercel --prod --yes
 ### Backend
 ```bash
 cd apps/api
+python -m venv .venv && .venv/bin/pip install -e .
 .venv/bin/uvicorn main:app --reload
 # Runs on http://localhost:8000
 ```
@@ -67,9 +83,18 @@ cd apps/api
 ### Frontend
 ```bash
 cd apps/web
-npm run dev
+npm install
+npm run dev   # uses dotenv -e ../../.env -- next dev
 # Runs on http://localhost:3000
-# Loads vars from root .env via dotenv-cli
+```
+
+Both servers must run simultaneously for full-stack local testing.
+
+### ARQ Worker (local, when enrichment branch is active)
+```bash
+cd apps/api
+.venv/bin/arq worker.WorkerSettings
+# Requires: redis-server running + REDIS_URL in .env
 ```
 
 ### Root .env (source of truth for local)
@@ -84,4 +109,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 RAILWAY_API_URL=http://localhost:8000
 CORS_ORIGINS=http://localhost:3000
 DEFAULT_CLIENT_ID=00000000-0000-0000-0000-000000000001
+ENABLE_ENRICHMENT=false
+OPENAI_API_KEY=sk-...   (only needed when enrichment is on)
+REDIS_URL=redis://localhost:6379/0   (only needed when worker is running)
 ```

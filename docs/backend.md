@@ -134,6 +134,53 @@ Tickets can be marked as test data to isolate them from production views.
 }
 ```
 
+## Enrichment Pipeline (ARQ)
+
+> Lives on `agam1501/gwangju-v1` branch — not yet merged to main.
+
+Tickets are always committed to the DB **before** enrichment is attempted. Enrichment is fire-and-forget — failures never affect ticket persistence.
+
+### Kill switch
+
+Controlled by `ENABLE_ENRICHMENT` env var (set in Railway dashboard). Pydantic reads it via `config.py`:
+
+```python
+enable_enrichment: bool = True  # reads ENABLE_ENRICHMENT env var; True if unset
+```
+
+| Value | Effect |
+|---|---|
+| `false` | No enrichment jobs enqueued on CSV upload |
+| `true` (default if unset) | Jobs enqueued for every uploaded ticket |
+
+**Set `ENABLE_ENRICHMENT=false` in Railway before merging the enrichment branch.** Flip to `true` only when Redis + the ARQ worker service are running.
+
+### enrichment_status lifecycle
+
+| Status | Meaning |
+|---|---|
+| `PENDING` | Ticket inserted, job queued, worker hasn't started yet |
+| `PROCESSING` | Worker picked up the job |
+| `COMPLETED` | Taxonomies extracted and saved successfully |
+| `FAILED` | Exception during enrichment; ticket is safe, can retry via `POST /tickets/{id}/enrich` |
+
+### Key files (enrichment branch)
+
+| File | Role |
+|---|---|
+| `apps/api/worker.py` | ARQ `WorkerSettings` + `run_enrich_ticket()` task |
+| `apps/api/services/enrichment.py` | `enrich_ticket()` — sets PROCESSING, calls LLM, sets COMPLETED/FAILED |
+| `apps/api/arq_pool.py` | Lazy global ARQ Redis pool; non-fatal if Redis unavailable at startup |
+
+### Running the worker locally
+```bash
+cd apps/api
+.venv/bin/arq worker.WorkerSettings
+# Requires Redis running and REDIS_URL set in .env
+```
+
+---
+
 ## Analytics Endpoints
 
 | Method | Path | Description |
