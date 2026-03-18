@@ -1,3 +1,8 @@
+---
+name: skbaseai-scaling
+description: Known limitations and intentionally deferred work in SKBaseAI — client-side filtering thresholds, role enforcement gaps, CSV deduplication, taxonomy display, and enrichment pipeline status. Use when making architectural decisions, checking what is MVP vs production-ready, or understanding what not to fix yet.
+---
+
 # Scaling Notes
 
 ## Ticket Filtering: Client-Side vs Server-Side
@@ -79,3 +84,13 @@ Columns in `ticket_taxonomies` fetched by the frontend but intentionally not sho
 | `confidence_score` | 0–1 float from AI classifier | When AI taxonomy assignment is live — lets users evaluate prediction quality |
 | `source` | Who assigned the taxonomy (`ai`, `manual`, etc.) | When multiple assignment sources exist and need distinguishing |
 | `node` | Taxonomy node ID (for linking into the taxonomy reference tree) | When taxonomy drill-down or reference navigation is built |
+
+## Enrichment pipeline: ARQ worker not yet deployed
+
+The enrichment branch (`agam1501/gwangju-v1`) implements the ARQ worker but is not yet merged to main. Until it is:
+
+- `enrichment_status` column exists in the DB but tickets land with `NULL` status
+- No enrichment jobs are enqueued (no worker running)
+- `ENABLE_ENRICHMENT=false` should be set in Railway to make intent explicit
+
+When the branch merges, set `ENABLE_ENRICHMENT=true` in Railway only after confirming Redis and the ARQ worker service are running.

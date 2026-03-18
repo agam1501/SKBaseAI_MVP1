@@ -1,3 +1,8 @@
+---
+name: skbaseai-database
+description: Supabase Postgres schema for SKBaseAI — all tables, columns, types, relationships, and SQL patterns. Use when writing migrations, modifying ORM models, querying the database, or understanding the data model.
+---
+
 # Database — Supabase (Postgres + pgvector)
 
 ## Project
@@ -30,7 +35,6 @@ Which clients a user (Supabase auth user id = JWT `sub`) can access.
 | user_id | uuid PK | Supabase auth user id |
 | client_id | uuid PK FK → clients | |
 
-To create when missing:
 ```sql
 CREATE TABLE IF NOT EXISTS clients (
   client_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -71,6 +75,7 @@ Core ticket data ingested from source systems.
 | ticket_id | uuid PK | |
 | client_id | uuid | tenant identifier |
 | external_id | text | source system ID |
+| source_system | text | originating system name |
 | short_desc | text | required |
 | full_desc | text | full ticket body |
 | cleaned_text | text | pre-processed for embedding |
@@ -80,7 +85,9 @@ Core ticket data ingested from source systems.
 | priority | text | |
 | is_resolved | bool | gates vector search candidates |
 | is_test | bool | `false` by default — marks test/dev data for filtering |
+| enrichment_status | enrichment_status_enum | `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED` — null until enrichment branch merged |
 | created_at / updated_at | timestamptz | |
+| resolved_at | timestamptz | set when status → CLOSED |
 
 ### ticket_embeddings
 Vector embeddings of ticket text chunks.
@@ -95,21 +102,21 @@ Vector embeddings of ticket text chunks.
 | embedding_model | text | model used |
 
 ### ticket_taxonomies
-LLM-extracted classification of tickets (assignments linking tickets to taxonomy reference tables).
+LLM-extracted classification of tickets.
 
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
 | client_id | uuid | tenant |
 | ticket_id | uuid FK → tickets | |
-| taxonomy_type | text | e.g. `business_category`, `application`, `resolution`, `root_cause` |
+| taxonomy_type | text | `business_category`, `application`, `resolution`, `root_cause` |
 | l1 / l2 / l3 | text | 3-level taxonomy hierarchy |
 | node | text | leaf node / code id from reference table |
-| confidence_score | float | |
-| source | text | assignment source |
+| confidence_score | float | 0–1 from AI classifier |
+| source | text | assignment source (`ai`, `manual`, etc.) |
 | source_model_version | text | model version if LLM-assigned |
 | is_active | bool | set to false on re-enrichment (audit trail) |
-| taxonomy_assigned_at | timestamptz | when assigned |
+| taxonomy_assigned_at | timestamptz | |
 | created_at | timestamptz | |
 
 ### taxonomy_business_category
@@ -117,72 +124,55 @@ Reference table: L1/L2/L3 business category hierarchy. Optional per-client overr
 
 | Column | Type | Notes |
 |---|---|---|
-| id | uuid PK | default gen_random_uuid() |
+| id | uuid PK | |
 | client_id | uuid | null = global |
-| l1 | text | top level |
-| l2 | text | |
-| l3 | text | |
+| l1 / l2 / l3 | text | hierarchy |
 | node | text | unique node identifier |
 | label | text | display label |
-| parent_node_id | text | parent in hierarchy |
+| parent_node_id | text | |
 | is_active | bool | default true |
-| created_at / updated_at | timestamptz | |
 | keywords | text | search/keyword hints |
+| created_at / updated_at | timestamptz | |
 
 ### taxonomy_application
 Reference table: applications/products (L1/L2/L3 + vendor, product, keywords). Optional per-client override.
 
 | Column | Type | Notes |
 |---|---|---|
-| id | uuid PK | default gen_random_uuid() |
+| id | uuid PK | |
 | client_id | uuid | null = global |
 | l1 / l2 / l3 | text | hierarchy |
 | node_id | text | unique node identifier |
-| label | text | |
-| software_vendor | text | |
-| product_name | text | |
+| label / software_vendor / product_name | text | |
 | keywords | jsonb | array or object of keywords |
-| app_group | text | |
-| category | text | |
-| description | text | |
+| app_group / category / description | text | |
 | is_active | bool | default true |
 | created_at / updated_at | timestamptz | |
 
 ### taxonomy_resolution
-Reference table: resolution outcomes and action types (L1 outcome, L2 action, L3 resolution code).
+Reference table: resolution outcomes and action types.
 
 | Column | Type | Notes |
 |---|---|---|
-| id | uuid PK | default gen_random_uuid() |
+| id | uuid PK | |
 | client_id | uuid | null = global |
-| l1_outcome | text | |
-| l2_action_type | text | |
-| l3_resolution_code | text | |
+| l1_outcome / l2_action_type / l3_resolution_code | text | hierarchy |
 | resolution_code | text | primary code |
-| resolution_durability | text | |
-| definition | text | |
-| examples | text | |
-| usage_guidance | text | |
+| resolution_durability / definition / examples / usage_guidance | text | |
 | is_active | bool | default true |
 | created_at / updated_at | timestamptz | |
 
 ### taxonomy_root_cause
-Reference table: root cause domains and codes (L1 domain, L2 type, L3 root cause).
+Reference table: root cause domains and codes.
 
 | Column | Type | Notes |
 |---|---|---|
-| id | uuid PK | default gen_random_uuid() |
+| id | uuid PK | |
 | client_id | uuid | null = global |
-| l1_cause_domain | text | |
-| l2_cause_type | text | |
-| l3_root_cause | text | |
+| l1_cause_domain / l2_cause_type / l3_root_cause | text | hierarchy |
 | root_cause_code_id | text | primary code |
-| definition | text | |
-| examples | text | |
-| usage_guidance | text | |
-| default_owner | text | suggested owner |
-| preventability | text | |
-| change_related | text | |
+| definition / examples / usage_guidance | text | |
+| default_owner / preventability / change_related | text | |
 | is_active | bool | default true |
 | created_at / updated_at | timestamptz | |
 
@@ -193,11 +183,11 @@ AI-generated resolution proposals.
 |---|---|---|
 | id | uuid PK | |
 | ticket_id | uuid FK → tickets | |
-| proposal_narrative | text | the generated proposal text |
-| similar_ticket_ids | uuid[] | array of ticket_ids used as context |
+| proposal_narrative | text | generated proposal text |
+| similar_ticket_ids | uuid[] | ticket_ids used as context |
 | is_latest | bool | only one true per ticket at a time |
 | llm_model_used | text | |
-| proposal_created_at | timestamptz | when the LLM generated this proposal |
+| proposal_created_at | timestamptz | |
 
 ### ticket_proposal_feedback
 Human feedback on proposals.
@@ -211,7 +201,7 @@ Human feedback on proposals.
 | reason_if_rejected | text | |
 | modified_narrative | text | user-edited version |
 | user_id | uuid | Supabase auth user |
-| feedback_created_at | timestamptz | when feedback was submitted |
+| feedback_created_at | timestamptz | |
 
 ## Vector Search Pattern (Phase 2)
 ```sql

@@ -1,3 +1,8 @@
+---
+name: skbaseai-overview
+description: High-level system architecture, services, request flow, and phase status for SKBaseAI. Use when understanding how the system fits together, what phase a feature belongs to, or which service handles what.
+---
+
 # SKBaseAI — System Overview
 
 ## What It Does
@@ -26,7 +31,7 @@ Browser
           → OpenAI API  (embeddings + LLM — Phase 3)
 ```
 
-> Browser never calls Railway directly. See [docs/bff-auth.md](./bff-auth.md) for the full auth and proxy flow.
+> Browser never calls Railway directly. See `.claude/skills/auth-bff/SKILL.md` for the full auth and proxy flow.
 
 ## Phase Status
 
