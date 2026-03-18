@@ -4,7 +4,7 @@ import { useClientContext } from "@/contexts/ClientContext";
 import { apiClient } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,13 +19,19 @@ const EMPTY_CLIENT_VALUE = "__none__";
 
 export function TopNav() {
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
+  const [supabase, setSupabase] = useState<ReturnType<
+    typeof createClient
+  > | null>(null);
+  useEffect(() => {
+    setSupabase(createClient());
+  }, []);
   const { clients, selectedClient, setSelectedClient, loadClients, loading } =
     useClientContext();
   const [email, setEmail] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!supabase) return;
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) return;
       setEmail(data.session.user?.email ?? null);
@@ -43,6 +49,7 @@ export function TopNav() {
   }, [supabase, loadClients]);
 
   async function signOut() {
+    if (!supabase) return;
     await supabase.auth.signOut();
     router.push("/login");
   }
