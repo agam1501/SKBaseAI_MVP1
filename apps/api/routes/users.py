@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 import httpx
@@ -13,6 +14,7 @@ from routes.tickets import get_effective_client_id
 from schemas import UserInvite, UserRead
 from services import supabase_admin
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["users"])
 
 
@@ -89,6 +91,7 @@ async def invite_user(
         )
 
     redirect_to = f"{settings.site_url}/auth/callback"
+    logger.info("[invite] redirect_to=%s", redirect_to)
     try:
         auth_user = await supabase_admin.invite_user_by_email(body.email, redirect_to)
     except httpx.HTTPStatusError as exc:
