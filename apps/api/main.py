@@ -1,11 +1,7 @@
 import logging
+
 import httpx
 from fastapi import Depends, FastAPI, HTTPException, Request
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s %(message)s",
-)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
@@ -15,6 +11,11 @@ from config import settings
 from models import Ticket, TicketProposal, TicketProposalFeedback, TicketTaxonomy, UserRoles
 from routes import analytics, clients, proposals, taxonomies, tickets, users
 from schemas import FeedbackRead, ProposalRead, TaxonomyRead, TicketRead, UserRoleRead
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
 
 app = FastAPI(title="SKBaseAI API", version="0.1.0")
 
