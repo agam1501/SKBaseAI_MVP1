@@ -62,7 +62,9 @@ export function AppSidebar({
   onResizeStart: (e: React.MouseEvent) => void;
 }) {
   const pathname = usePathname();
-  const [supabase, setSupabase] = useState<ReturnType<typeof createClient> | null>(null);
+  const [supabase, setSupabase] = useState<ReturnType<
+    typeof createClient
+  > | null>(null);
   useEffect(() => {
     setSupabase(createClient());
   }, []);

@@ -19,7 +19,9 @@ const EMPTY_CLIENT_VALUE = "__none__";
 
 export function TopNav() {
   const router = useRouter();
-  const [supabase, setSupabase] = useState<ReturnType<typeof createClient> | null>(null);
+  const [supabase, setSupabase] = useState<ReturnType<
+    typeof createClient
+  > | null>(null);
   useEffect(() => {
     setSupabase(createClient());
   }, []);
