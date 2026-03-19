@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ClientProvider } from "@/contexts/ClientContext";
 import { AppShell } from "@/components/AppShell";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,6 +19,7 @@ export default function RootLayout({
       <body className="bg-gray-50 text-gray-900 antialiased">
         <ClientProvider>
           <AppShell>{children}</AppShell>
+          <Toaster />
         </ClientProvider>
       </body>
     </html>
