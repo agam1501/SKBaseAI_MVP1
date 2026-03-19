@@ -10,12 +10,30 @@ function CallbackHandler() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // createBrowserClient (detectSessionInUrl: true) automatically processes
-    // both PKCE (?code=) and implicit (#access_token=) flows and clears the
-    // URL before our effect runs. Manually re-parsing the hash or calling
-    // exchangeCodeForSession here would double-process the tokens and fail.
-    // Instead, subscribe to the SIGNED_IN event that auto-detection fires.
+    // Explicitly handle implicit flow: #access_token=...&refresh_token=...
+    // detectSessionInUrl on createBrowserClient (SSR) does not reliably
+    // process hash fragments — manually call setSession instead.
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
 
+    if (accessToken && refreshToken) {
+      supabase.auth
+        .setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ error }) => {
+          if (error) {
+            setError(
+              "Invitation link is invalid or expired. Please request a new invite.",
+            );
+          } else {
+            router.replace("/auth/set-password");
+          }
+        });
+      return;
+    }
+
+    // Fallback: PKCE flow (?code=) — handled automatically by createBrowserClient.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
@@ -24,15 +42,12 @@ function CallbackHandler() {
       }
     });
 
-    // If SIGNED_IN fired before our subscription was created, a session
-    // already exists — redirect immediately.
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         router.replace("/auth/set-password");
       }
     });
 
-    // After 5s with no session, the link is invalid or expired.
     const timer = setTimeout(async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
