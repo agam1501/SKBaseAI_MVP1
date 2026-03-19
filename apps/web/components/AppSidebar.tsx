@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   BarChart2,
+  Building2,
   LayoutDashboard,
   Tag,
   TrendingUp,
@@ -39,6 +40,12 @@ const NAV_ITEMS = [
     href: "/dashboard",
     icon: LayoutDashboard,
     roles: null,
+  },
+  {
+    label: "Clients",
+    href: "/clients",
+    icon: Building2,
+    roles: ["Admin", "Developer"] as UserRole["role"][],
   },
   {
     label: "Ingestion",
