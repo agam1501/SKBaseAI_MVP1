@@ -9,9 +9,10 @@ from pydantic import ValidationError
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from arq_pool import get_arq_pool
 from config import settings
 from db import get_db
-from models import Ticket, TicketStatus, TicketTaxonomy, UserClient
+from models import EnrichmentStatus, Ticket, TicketStatus, TicketTaxonomy, UserClient
 from schemas import (
     TaxonomyRead,
     TicketCreate,
@@ -66,10 +67,25 @@ async def create_ticket(
     db: AsyncSession = Depends(get_db),
     client_id: uuid.UUID = Depends(get_effective_client_id),
 ):
-    ticket = Ticket(client_id=client_id, **body.model_dump())
+    ticket = Ticket(
+        client_id=client_id,
+        enrichment_status=EnrichmentStatus.PENDING,
+        **body.model_dump(),
+    )
     db.add(ticket)
     await db.commit()
     await db.refresh(ticket)
+
+    # Enqueue background enrichment
+    if settings.enable_enrichment:
+        try:
+            pool = await get_arq_pool()
+            await pool.enqueue_job("run_enrich_ticket", str(ticket.ticket_id))
+        except Exception:
+            logger.warning(
+                "Failed to enqueue enrichment for ticket %s", ticket.ticket_id, exc_info=True
+            )
+
     return ticket
 
 
@@ -211,7 +227,9 @@ async def upload_tickets_csv(
             continue
         data = body.model_dump()
         data["is_test"] = is_test
-        tickets_to_add.append(Ticket(client_id=client_id, **data))
+        tickets_to_add.append(
+            Ticket(client_id=client_id, enrichment_status=EnrichmentStatus.PENDING, **data)
+        )
 
     # Empty CSV (header only, no data rows)
     if not tickets_to_add and not errors:
@@ -227,6 +245,16 @@ async def upload_tickets_csv(
     except Exception as exc:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Bulk insert failed: {exc}") from exc
+
+    # Enqueue background enrichment for each ticket (gated by kill switch)
+    if settings.enable_enrichment:
+        try:
+            pool = await get_arq_pool()
+            for t in tickets_to_add:
+                await pool.enqueue_job("run_enrich_ticket", str(t.ticket_id))
+        except Exception:
+            logger.warning("Failed to enqueue enrichment for uploaded tickets", exc_info=True)
+
     return TicketUploadResult(created=len(tickets_to_add), errors=errors, warnings=upload_warnings)
 
 
