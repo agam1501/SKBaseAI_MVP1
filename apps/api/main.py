@@ -1,5 +1,4 @@
 import logging
-import os
 
 import httpx
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -44,10 +43,6 @@ _logger = logging.getLogger(__name__)
 @app.on_event("startup")
 async def startup():
     """Fetch Supabase public keys and validate Pydantic/ORM schema alignment."""
-    _logger.info("=== CONFIG DEBUG ===")
-    _logger.info("SITE_URL env var: %s", os.environ.get("SITE_URL", "NOT SET"))
-    _logger.info("settings.site_url: %s", settings.site_url)
-    _logger.info("===================")
     url = f"{settings.supabase_url}/auth/v1/.well-known/jwks.json"
     async with httpx.AsyncClient() as client:
         resp = await client.get(url)
