@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     llm_model: str = "gpt-4o-mini"
 
     redis_url: str = "redis://localhost:6379/0"
+    enable_enrichment: bool = True
     default_client_id: str = "00000000-0000-0000-0000-000000000001"
     cors_origins: str = "http://localhost:3000"
     site_url: str = "http://localhost:3000"

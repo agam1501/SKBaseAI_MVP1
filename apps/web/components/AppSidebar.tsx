@@ -35,14 +35,12 @@ import type { UserRole } from "@/lib/types";
 
 const NAV_ITEMS = [
   { label: "Overview", href: "/overview", icon: BarChart2, roles: null },
-  { label: "Analytics", href: "/analytics", icon: TrendingUp, roles: null },
   {
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
     roles: null,
   },
-  { label: "Taxonomies", href: "/taxonomies", icon: Tag, roles: null },
   {
     label: "Clients",
     href: "/clients",
@@ -61,6 +59,8 @@ const NAV_ITEMS = [
     icon: Users2,
     roles: ["Admin", "Developer"] as UserRole["role"][],
   },
+  { label: "Analytics", href: "/analytics", icon: TrendingUp, roles: null },
+  { label: "Taxonomies", href: "/taxonomies", icon: Tag, roles: null },
 ];
 
 export function AppSidebar({
@@ -104,10 +104,10 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" className="relative">
       <SidebarHeader className="px-4 py-3">
-        <span className="font-semibold text-sm group-data-[collapsible=icon]:hidden">
+        <span className="font-semibold text-lg group-data-[collapsible=icon]:hidden">
           SKBaseAI
         </span>
-        <span className="font-semibold text-sm hidden group-data-[collapsible=icon]:block">
+        <span className="font-semibold text-lg hidden group-data-[collapsible=icon]:block">
           SK
         </span>
       </SidebarHeader>
