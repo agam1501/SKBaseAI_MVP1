@@ -1,23 +1,27 @@
 import csv
 import io
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
 from db import get_db
-from models import Ticket, TicketStatus, UserClient
+from models import Ticket, TicketStatus, TicketTaxonomy, UserClient
 from schemas import (
+    TaxonomyRead,
     TicketCreate,
     TicketRead,
     TicketStatusUpdate,
     TicketUploadResult,
     TicketUploadRowError,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["tickets"])
 
@@ -272,3 +276,44 @@ async def update_ticket_status(
     await db.commit()
     await db.refresh(ticket)
     return ticket
+
+
+@router.post("/tickets/{ticket_id}/enrich", response_model=list[TaxonomyRead])
+async def enrich_ticket(
+    ticket_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    client_id: uuid.UUID = Depends(get_effective_client_id),
+):
+    """Run AI taxonomy prediction for a ticket synchronously."""
+    result = await db.execute(
+        select(Ticket).where(Ticket.ticket_id == ticket_id, Ticket.client_id == client_id)
+    )
+    ticket = result.scalar_one_or_none()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    # Deactivate existing active taxonomy predictions
+    await db.execute(
+        update(TicketTaxonomy)
+        .where(
+            TicketTaxonomy.ticket_id == ticket_id,
+            TicketTaxonomy.client_id == client_id,
+            TicketTaxonomy.is_active.is_(True),
+        )
+        .values(is_active=False)
+    )
+
+    try:
+        from services.llm import extract_taxonomies
+
+        taxonomies = await extract_taxonomies(db, ticket)
+    except Exception:
+        logger.exception("Enrichment failed for ticket %s", ticket_id)
+        await db.rollback()
+        raise HTTPException(
+            status_code=502,
+            detail="Enrichment failed — the AI service may be temporarily unavailable.",
+        )
+
+    await db.commit()
+    return taxonomies

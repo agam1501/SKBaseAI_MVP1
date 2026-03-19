@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 import type { ReactNode } from "react";
 import type {
   Ticket,
@@ -116,6 +117,7 @@ export default function TicketDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [taxonomyError, setTaxonomyError] = useState<string | null>(null);
   const [toggling, setToggling] = useState(false);
+  const [enriching, setEnriching] = useState(false);
 
   // Global taxonomy edit state
   const [isEditing, setIsEditing] = useState(false);
@@ -178,6 +180,32 @@ export default function TicketDetailPage() {
       setError(e instanceof Error ? e.message : "Failed to update status");
     } finally {
       setToggling(false);
+    }
+  }
+
+  async function handleEnrich() {
+    if (!ticket || !selectedClient) return;
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return;
+    setEnriching(true);
+    try {
+      const result = await apiClient.post<Taxonomy[]>(
+        `/api/v1/tickets/${id}/enrich`,
+        token,
+        {},
+        { clientId: selectedClient.client_id },
+      );
+      setTaxonomies(result);
+      toast.success("Enrichment complete");
+    } catch (e: unknown) {
+      const msg =
+        e instanceof Error
+          ? e.message
+          : "Enrichment failed — please try again later.";
+      toast.error(msg);
+    } finally {
+      setEnriching(false);
     }
   }
 
@@ -453,14 +481,24 @@ export default function TicketDetailPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold">Taxonomies</h2>
               {!isEditing ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={startEditing}
-                  disabled={refLoading}
-                >
-                  Edit Taxonomies
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEnrich}
+                    disabled={enriching}
+                  >
+                    {enriching ? "Enriching…" : "Enrich"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={startEditing}
+                    disabled={refLoading || enriching}
+                  >
+                    Edit Taxonomies
+                  </Button>
+                </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <Button
