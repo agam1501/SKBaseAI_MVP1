@@ -25,14 +25,17 @@ description: Railway (backend) and Vercel (frontend) deployment config, all envi
 | `ENABLE_ENRICHMENT` | `false` — set explicitly; Pydantic defaults to `true` if unset. Flip to `true` only when Redis + ARQ worker are running. |
 | `REDIS_URL` | Redis connection string — only needed when ARQ worker is deployed |
 | `OPENAI_API_KEY` | Required when enrichment is enabled |
+| `SITE_URL` | `https://skbasemvp.vercel.app` — base URL used as `redirect_to` in invite emails |
 
 > **Important**: `ENABLE_ENRICHMENT` is read by Pydantic settings at startup from this env var. Setting it to `false` in Railway and redeploying disables enrichment with no code change needed.
 
 ### Deploy
-```bash
-cd apps/api
-railway up --detach
-```
+
+Deploy by merging to `main`. Railway auto-deploys via GitHub integration.
+Never use `railway up` — it bypasses the integration, creates untracked deployments,
+and may not pick up env vars correctly.
+
+To force a redeploy without a code change: Railway dashboard → Deployments → Redeploy.
 
 ### ARQ Worker (future — when enrichment branch is merged)
 The worker runs as a **separate Railway service** pointing at the same repo:
