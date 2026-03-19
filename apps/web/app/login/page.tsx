@@ -34,20 +34,6 @@ export default function LoginPage() {
     setLoading(false);
   }
 
-  async function handleSignUp(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) {
-      setError(error.message);
-    } else {
-      setError("Check your email to confirm your account.");
-    }
-    setLoading(false);
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center">
       <Card className="w-full max-w-sm">
@@ -88,15 +74,6 @@ export default function LoginPage() {
               className="w-full"
             >
               Sign In
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSignUp}
-              disabled={loading}
-              className="w-full"
-            >
-              Sign Up
             </Button>
           </form>
         </CardContent>
