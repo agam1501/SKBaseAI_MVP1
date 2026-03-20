@@ -101,6 +101,53 @@ async def create_client(
         )
 
 
+@router.patch("/clients/{client_id}", response_model=ClientRead)
+async def rename_client(
+    client_id: uuid.UUID,
+    body: ClientCreate,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Rename a client the current user has access to."""
+    user_id = _user_id(request)
+    try:
+        result = await db.execute(
+            select(Client)
+            .join(UserClient, UserClient.client_id == Client.client_id)
+            .where(UserClient.user_id == user_id, Client.client_id == client_id)
+        )
+        client = result.scalar_one_or_none()
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+
+        # Case-insensitive duplicate name check (exclude current client)
+        existing = await db.execute(
+            select(Client)
+            .join(UserClient, UserClient.client_id == Client.client_id)
+            .where(
+                UserClient.user_id == user_id,
+                func.lower(Client.name) == body.name.strip().lower(),
+                Client.client_id != client_id,
+            )
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A client with this name already exists.",
+            )
+
+        client.name = body.name.strip()
+        await db.commit()
+        await db.refresh(client)
+        return client
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception as exc:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to rename client: {exc}")
+
+
 @router.post("/clients/{client_id}/join", status_code=status.HTTP_204_NO_CONTENT)
 async def join_client(
     client_id: uuid.UUID,
