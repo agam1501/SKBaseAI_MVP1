@@ -335,6 +335,7 @@ async def enrich_ticket(
         from services.llm import extract_taxonomies
 
         taxonomies = await extract_taxonomies(db, ticket)
+        db.add_all(taxonomies)
     except Exception:
         logger.exception("Enrichment failed for ticket %s", ticket_id)
         await db.rollback()
