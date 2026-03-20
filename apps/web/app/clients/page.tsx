@@ -144,7 +144,6 @@ export default function SelectClientPage() {
                             if (e.key === "Enter") handleRename(c.client_id);
                             if (e.key === "Escape") cancelEditing();
                           }}
-                          onBlur={() => handleRename(c.client_id)}
                           onClick={(e) => e.stopPropagation()}
                           disabled={saving}
                           className="h-7 text-sm"
@@ -158,7 +157,34 @@ export default function SelectClientPage() {
                         </>
                       )}
                     </button>
-                    {editingId !== c.client_id && (
+                    {editingId === c.client_id ? (
+                      <div className="flex gap-1">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          disabled={saving || !editName.trim()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRename(c.client_id);
+                          }}
+                        >
+                          {saving ? "Saving…" : "Save"}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          disabled={saving}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cancelEditing();
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -168,7 +194,7 @@ export default function SelectClientPage() {
                           startEditing(c.client_id, c.name);
                         }}
                       >
-                        Rename
+                        Edit name
                       </Button>
                     )}
                   </div>
