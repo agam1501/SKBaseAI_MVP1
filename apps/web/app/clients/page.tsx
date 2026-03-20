@@ -2,12 +2,15 @@
 
 import { useClientContext } from "@/contexts/ClientContext";
 import { createClient } from "@/lib/supabase";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { apiClient } from "@/lib/api-client";
+import { toast } from "sonner";
 
 export default function SelectClientPage() {
   const router = useRouter();
@@ -21,6 +24,11 @@ export default function SelectClientPage() {
     error,
   } = useClientContext();
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) {
@@ -31,11 +39,65 @@ export default function SelectClientPage() {
     });
   }, [supabase, loadClients, router]);
 
-  async function handleRefresh() {
+  async function getToken() {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
-    if (!token) return router.push("/login");
-    await loadClients(token);
+    if (!token) {
+      router.push("/login");
+      return null;
+    }
+    return token;
+  }
+
+  async function handleRefresh() {
+    const token = await getToken();
+    if (token) await loadClients(token);
+  }
+
+  function startEditing(clientId: string, currentName: string) {
+    setEditingId(clientId);
+    setEditName(currentName);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }
+
+  function cancelEditing() {
+    setEditingId(null);
+    setEditName("");
+  }
+
+  async function handleRename(clientId: string) {
+    const trimmed = editName.trim();
+    if (!trimmed) {
+      cancelEditing();
+      return;
+    }
+    const current = clients.find((c) => c.client_id === clientId);
+    if (current && current.name === trimmed) {
+      cancelEditing();
+      return;
+    }
+
+    const token = await getToken();
+    if (!token) return;
+
+    setSaving(true);
+    try {
+      await apiClient.patch(`/api/v1/clients/${clientId}`, token, {
+        name: trimmed,
+      });
+      toast.success("Client renamed");
+      if (selectedClient?.client_id === clientId) {
+        setSelectedClient({ ...selectedClient, name: trimmed });
+      }
+      await loadClients(token);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Rename failed";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+      setEditingId(null);
+      setEditName("");
+    }
   }
 
   return (
@@ -60,23 +122,56 @@ export default function SelectClientPage() {
             ) : (
               <div className="space-y-2">
                 {clients.map((c) => (
-                  <Button
+                  <div
                     key={c.client_id}
-                    variant="outline"
                     className={cn(
-                      "w-full justify-start text-left h-auto py-2",
+                      "flex items-center gap-2 rounded-md border px-3 py-2",
                       selectedClient?.client_id === c.client_id &&
                         "border-primary bg-secondary",
                     )}
-                    onClick={() => setSelectedClient(c)}
                   >
-                    <div className="w-full">
-                      <div className="font-medium">{c.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {c.client_id}
-                      </div>
-                    </div>
-                  </Button>
+                    <button
+                      type="button"
+                      className="flex-1 text-left min-w-0"
+                      onClick={() => setSelectedClient(c)}
+                    >
+                      {editingId === c.client_id ? (
+                        <Input
+                          ref={inputRef}
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleRename(c.client_id);
+                            if (e.key === "Escape") cancelEditing();
+                          }}
+                          onBlur={() => handleRename(c.client_id)}
+                          onClick={(e) => e.stopPropagation()}
+                          disabled={saving}
+                          className="h-7 text-sm"
+                        />
+                      ) : (
+                        <>
+                          <div className="font-medium">{c.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {c.client_id}
+                          </div>
+                        </>
+                      )}
+                    </button>
+                    {editingId !== c.client_id && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startEditing(c.client_id, c.name);
+                        }}
+                      >
+                        Rename
+                      </Button>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
