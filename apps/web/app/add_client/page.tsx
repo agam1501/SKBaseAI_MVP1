@@ -38,7 +38,21 @@ export default function AddClientPage() {
         router.push("/login");
         return;
       }
-      await loadClients(data.session.access_token);
+      const token = data.session.access_token;
+      const res = await fetch("/api/v1/me/role", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const { role } = await res.json();
+        if (role !== "Admin" && role !== "Developer") {
+          router.replace("/clients");
+          return;
+        }
+      } else {
+        router.replace("/clients");
+        return;
+      }
+      await loadClients(token);
     });
   }, [supabase, loadClients, router]);
 

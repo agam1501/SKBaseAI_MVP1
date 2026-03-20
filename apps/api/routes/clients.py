@@ -7,7 +7,7 @@ from sqlalchemy.sql import func
 
 from config import settings
 from db import get_db
-from models import Client, UserClient, UserRoles
+from models import Client, UserClient, UserRole, UserRoles
 from schemas import ClientCreate, ClientRead, UserRoleRead
 
 router = APIRouter(tags=["clients"])
@@ -31,6 +31,18 @@ def _user_id(request: Request) -> uuid.UUID:
     user = getattr(request.state, "user", {})
     raw = user.get("sub", settings.default_client_id)
     return uuid.UUID(str(raw))
+
+
+async def _require_admin_or_developer(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> uuid.UUID:
+    user_id = _user_id(request)
+    result = await db.execute(select(UserRoles).where(UserRoles.user_id == user_id))
+    ur = result.scalar_one_or_none()
+    if not ur or ur.role not in (UserRole.admin, UserRole.developer):
+        raise HTTPException(status_code=403, detail="Requires Admin or Developer role")
+    return user_id
 
 
 @router.get("/clients", response_model=list[ClientRead])
@@ -65,9 +77,10 @@ async def create_client(
     body: ClientCreate,
     request: Request,
     db: AsyncSession = Depends(get_db),
+    me: uuid.UUID = Depends(_require_admin_or_developer),
 ):
     """Create a client and automatically grant the current user access to it."""
-    user_id = _user_id(request)
+    user_id = me
     try:
         # Case-insensitive duplicate name check among clients this user has access to
         existing = await db.execute(
@@ -107,9 +120,10 @@ async def rename_client(
     body: ClientCreate,
     request: Request,
     db: AsyncSession = Depends(get_db),
+    me: uuid.UUID = Depends(_require_admin_or_developer),
 ):
     """Rename a client the current user has access to."""
-    user_id = _user_id(request)
+    user_id = me
     try:
         result = await db.execute(
             select(Client)

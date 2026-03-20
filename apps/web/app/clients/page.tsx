@@ -24,6 +24,7 @@ export default function SelectClientPage() {
     error,
   } = useClientContext();
 
+  const [role, setRole] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -36,6 +37,15 @@ export default function SelectClientPage() {
         return;
       }
       await loadClients(data.session.access_token);
+      try {
+        const me = await apiClient.get<{ role: string }>(
+          "/api/v1/me/role",
+          data.session.access_token,
+        );
+        setRole(me.role);
+      } catch {
+        // no role — hide privileged actions
+      }
     });
   }, [supabase, loadClients, router]);
 
@@ -185,17 +195,19 @@ export default function SelectClientPage() {
                         </Button>
                       </div>
                     ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startEditing(c.client_id, c.name);
-                        }}
-                      >
-                        Edit name
-                      </Button>
+                      (role === "Admin" || role === "Developer") && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditing(c.client_id, c.name);
+                          }}
+                        >
+                          Edit name
+                        </Button>
+                      )
                     )}
                   </div>
                 ))}
@@ -205,9 +217,11 @@ export default function SelectClientPage() {
         </Card>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="outline" asChild>
-            <Link href="/clients/add">Add client</Link>
-          </Button>
+          {(role === "Admin" || role === "Developer") && (
+            <Button variant="outline" asChild>
+              <Link href="/clients/add">Add client</Link>
+            </Button>
+          )}
           {selectedClient && (
             <Button asChild>
               <Link href="/dashboard">Go to Dashboard</Link>
