@@ -1,0 +1,11 @@
+short_desc,full_desc,external_id,source_system,status,priority
+"Email sync failure","Outlook integration stops syncing after 24h",INC010,ServiceNow,OPEN,High
+"MFA prompt loop","Users stuck in MFA verification loop on mobile",INC011,Jira,OPEN,Critical
+"Report export blank","Exported PDF reports contain no data",INC012,ServiceNow,CLOSED,Medium
+"VPN disconnect","VPN drops every 15 minutes on macOS clients",INC013,ServiceNow,OPEN,High
+"Search returns stale results","Search index not updating for new records",INC014,Jira,OPEN,Medium
+"Printer queue stuck","Print jobs queue indefinitely on floor 3",INC015,ServiceNow,CLOSED,Low
+"SSO redirect error","SAML assertion fails for contractor accounts",INC016,Jira,OPEN,High
+"Disk space alert","Production DB server at 95% disk usage",INC017,ServiceNow,OPEN,Critical
+"Calendar invite missing","Meeting invites not appearing for external guests",INC018,Jira,CLOSED,Medium
+"File upload timeout","Attachments over 10MB fail to upload",INC019,ServiceNow,OPEN,Low
