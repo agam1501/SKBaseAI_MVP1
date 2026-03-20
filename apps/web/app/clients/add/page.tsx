@@ -25,10 +25,22 @@ export default function AddClientPage() {
   );
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) {
         router.push("/login");
         return;
+      }
+      const token = data.session.access_token;
+      const res = await fetch("/api/v1/me/role", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const { role } = await res.json();
+        if (role !== "Admin" && role !== "Developer") {
+          router.replace("/clients");
+        }
+      } else {
+        router.replace("/clients");
       }
     });
   }, [supabase, router]);
