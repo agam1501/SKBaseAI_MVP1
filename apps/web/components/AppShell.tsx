@@ -39,7 +39,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     [sidebarWidth],
   );
 
-  if (pathname === "/login") {
+  if (pathname === "/login" || pathname.startsWith("/auth")) {
     return <>{children}</>;
   }
 

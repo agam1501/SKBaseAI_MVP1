@@ -36,7 +36,8 @@ export default function SetPasswordPage() {
     if (updateError) {
       setError(updateError.message);
     } else {
-      router.replace("/dashboard");
+      await supabase.auth.signOut();
+      router.replace("/login");
     }
   }
 
