@@ -35,10 +35,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <h1 className="text-2xl font-bold">SKBaseAI</h1>
+          <p className="text-sm text-muted-foreground">
+            AI-powered IT ticket resolution
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && <p className="text-sm text-destructive">{error}</p>}
