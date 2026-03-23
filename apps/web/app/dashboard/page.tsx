@@ -565,15 +565,16 @@ export default function DashboardPage() {
                             {t.short_desc}
                           </td>
                           <td className="px-4 py-3 text-sm whitespace-nowrap">
-                            <span
+                            <Badge
+                              variant="outline"
                               className={
                                 t.is_resolved
-                                  ? "text-gray-500"
-                                  : "text-amber-600 font-medium"
+                                  ? "border-green-200 bg-green-50 text-green-700"
+                                  : "border-amber-200 bg-amber-50 text-amber-700"
                               }
                             >
                               {getTicketStatus(t)}
-                            </span>
+                            </Badge>
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                             {t.priority ?? "—"}
