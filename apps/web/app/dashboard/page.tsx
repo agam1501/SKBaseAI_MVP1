@@ -497,23 +497,47 @@ export default function DashboardPage() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">External ID</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Summary</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Priority</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Enrichment</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          External ID
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Summary
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Priority
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Enrichment
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Created
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <tr key={i}>
-                          <td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>
-                          <td className="px-4 py-3"><Skeleton className="h-4 w-48" /></td>
-                          <td className="px-4 py-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
-                          <td className="px-4 py-3"><Skeleton className="h-4 w-14" /></td>
-                          <td className="px-4 py-3"><Skeleton className="h-5 w-20 rounded-full" /></td>
-                          <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
+                          <td className="px-4 py-3">
+                            <Skeleton className="h-4 w-20" />
+                          </td>
+                          <td className="px-4 py-3">
+                            <Skeleton className="h-4 w-48" />
+                          </td>
+                          <td className="px-4 py-3">
+                            <Skeleton className="h-5 w-16 rounded-full" />
+                          </td>
+                          <td className="px-4 py-3">
+                            <Skeleton className="h-4 w-14" />
+                          </td>
+                          <td className="px-4 py-3">
+                            <Skeleton className="h-5 w-20 rounded-full" />
+                          </td>
+                          <td className="px-4 py-3">
+                            <Skeleton className="h-4 w-24" />
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -525,9 +549,12 @@ export default function DashboardPage() {
                 ) : tickets.length === 0 ? (
                   <div className="px-4 py-16 text-center">
                     <Inbox className="mx-auto h-10 w-10 text-muted-foreground/50" />
-                    <p className="mt-3 text-sm font-medium text-gray-900">No tickets yet</p>
+                    <p className="mt-3 text-sm font-medium text-gray-900">
+                      No tickets yet
+                    </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Upload a CSV to get started with your first batch of tickets.
+                      Upload a CSV to get started with your first batch of
+                      tickets.
                     </p>
                     <Button
                       variant="outline"
@@ -541,7 +568,9 @@ export default function DashboardPage() {
                 ) : filteredTickets.length === 0 ? (
                   <div className="px-4 py-16 text-center">
                     <ListFilter className="mx-auto h-10 w-10 text-muted-foreground/50" />
-                    <p className="mt-3 text-sm font-medium text-gray-900">No tickets match your filters</p>
+                    <p className="mt-3 text-sm font-medium text-gray-900">
+                      No tickets match your filters
+                    </p>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Try adjusting or clearing your filters.
                     </p>
@@ -650,7 +679,9 @@ export default function DashboardPage() {
                           <td className="px-4 py-3 text-sm whitespace-nowrap">
                             <Badge
                               variant="outline"
-                              className={enrichmentBadgeClass(t.enrichment_status)}
+                              className={enrichmentBadgeClass(
+                                t.enrichment_status,
+                              )}
                             >
                               {t.enrichment_status ?? "N/A"}
                             </Badge>
