@@ -14,12 +14,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
   ListFilter,
   ChevronLeft,
+  Inbox,
   X,
 } from "lucide-react";
 import type { Ticket } from "@/lib/types";
@@ -310,6 +312,21 @@ export default function DashboardPage() {
     return t.status ?? (t.is_resolved ? "CLOSED" : "OPEN");
   }
 
+  function enrichmentBadgeClass(status: string | null): string {
+    switch (status) {
+      case "COMPLETED":
+        return "border-green-200 bg-green-50 text-green-700";
+      case "PROCESSING":
+        return "border-blue-200 bg-blue-50 text-blue-700";
+      case "PENDING":
+        return "border-amber-200 bg-amber-50 text-amber-700";
+      case "FAILED":
+        return "border-red-200 bg-red-50 text-red-700";
+      default:
+        return "border-gray-200 bg-gray-50 text-gray-500";
+    }
+  }
+
   function toggleSort(column: SortColumn) {
     if (sortColumn === column) {
       setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
@@ -477,20 +494,65 @@ export default function DashboardPage() {
             <Card className="overflow-hidden">
               <div className="overflow-x-auto">
                 {ticketsLoading ? (
-                  <div className="px-4 py-8 text-center text-sm text-gray-500">
-                    Loading tickets…
-                  </div>
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">External ID</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Summary</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Priority</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Enrichment</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <tr key={i}>
+                          <td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>
+                          <td className="px-4 py-3"><Skeleton className="h-4 w-48" /></td>
+                          <td className="px-4 py-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                          <td className="px-4 py-3"><Skeleton className="h-4 w-14" /></td>
+                          <td className="px-4 py-3"><Skeleton className="h-5 w-20 rounded-full" /></td>
+                          <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 ) : ticketsError ? (
                   <div className="px-4 py-8 text-center text-sm text-destructive">
                     Could not load tickets: {ticketsError}
                   </div>
                 ) : tickets.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-sm text-gray-500">
-                    No tickets yet.
+                  <div className="px-4 py-16 text-center">
+                    <Inbox className="mx-auto h-10 w-10 text-muted-foreground/50" />
+                    <p className="mt-3 text-sm font-medium text-gray-900">No tickets yet</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Upload a CSV to get started with your first batch of tickets.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-4"
+                      onClick={() => router.push("/ingestion")}
+                    >
+                      Go to Ingestion
+                    </Button>
                   </div>
                 ) : filteredTickets.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-sm text-gray-500">
-                    No tickets match your filters.
+                  <div className="px-4 py-16 text-center">
+                    <ListFilter className="mx-auto h-10 w-10 text-muted-foreground/50" />
+                    <p className="mt-3 text-sm font-medium text-gray-900">No tickets match your filters</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Try adjusting or clearing your filters.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-4"
+                      onClick={clearAllFilters}
+                    >
+                      Clear all filters
+                    </Button>
                   </div>
                 ) : (
                   <table className="min-w-full divide-y divide-gray-200">
@@ -529,6 +591,12 @@ export default function DashboardPage() {
                           onClick={() => toggleSort("created_at")}
                         >
                           Priority
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                        >
+                          Enrichment
                         </th>
                         <th
                           scope="col"
@@ -578,6 +646,14 @@ export default function DashboardPage() {
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                             {t.priority ?? "—"}
+                          </td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">
+                            <Badge
+                              variant="outline"
+                              className={enrichmentBadgeClass(t.enrichment_status)}
+                            >
+                              {t.enrichment_status ?? "N/A"}
+                            </Badge>
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                             {new Date(t.created_at).toLocaleDateString()}

@@ -6,9 +6,19 @@ import { createClient } from "@/lib/supabase";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Download, FileSpreadsheet } from "lucide-react";
 
 import type { UserRole } from "@/lib/types";
+
+type UploadEntry = {
+  id: string;
+  filename: string;
+  timestamp: Date;
+  created: number;
+  errorsCount: number;
+};
 
 const ALLOWED_ROLES: UserRole["role"][] = ["Admin", "Developer"];
 
@@ -26,6 +36,7 @@ export default function IngestionPage() {
     null,
   );
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadHistory, setUploadHistory] = useState<UploadEntry[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -71,6 +82,16 @@ export default function IngestionPage() {
         { clientId: selectedClient.client_id },
       );
       setUploadResult(result);
+      setUploadHistory((prev) => [
+        {
+          id: crypto.randomUUID(),
+          filename: uploadFile.name,
+          timestamp: new Date(),
+          created: result.created,
+          errorsCount: result.errors.length,
+        },
+        ...prev,
+      ]);
       setUploadFile(null);
     } catch (e: unknown) {
       setUploadError(e instanceof Error ? e.message : "Upload failed");
@@ -97,9 +118,68 @@ export default function IngestionPage() {
           </p>
         </div>
 
+        {/* CSV Format Guide — always visible */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">CSV Format Guide</h2>
+              <Button variant="outline" size="sm" asChild>
+                <a href="/sample-tickets.csv" download>
+                  <Download className="h-4 w-4 mr-1" />
+                  Download Sample CSV
+                </a>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm font-medium mb-2">Required columns</p>
+              <div className="flex flex-wrap gap-2">
+                {["short_desc", "status", "source_system", "external_id"].map(
+                  (col) => (
+                    <Badge
+                      key={col}
+                      variant="secondary"
+                      className="font-mono text-xs"
+                    >
+                      {col}
+                    </Badge>
+                  ),
+                )}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-2">Optional columns</p>
+              <div className="flex flex-wrap gap-2">
+                {["full_desc", "resolution", "root_cause", "priority"].map(
+                  (col) => (
+                    <Badge
+                      key={col}
+                      variant="outline"
+                      className="font-mono text-xs"
+                    >
+                      {col}
+                    </Badge>
+                  ),
+                )}
+              </div>
+            </div>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p>
+                <span className="font-medium">Status values:</span> OPEN or
+                CLOSED
+              </p>
+              <p>
+                <span className="font-medium">File limits:</span> 5 MB max,
+                5,000 rows max
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {!selectedClient && (
           <p className="text-sm text-muted-foreground">
-            Select a client on the dashboard first.
+            Select a client from the dropdown above to upload tickets.
           </p>
         )}
 
@@ -218,16 +298,53 @@ export default function IngestionPage() {
               </CardContent>
             </Card>
 
-            {/* History placeholder */}
+            {/* Recent Uploads (session) */}
             <Card>
               <CardHeader>
-                <h2 className="text-lg font-bold">Ingestion History</h2>
+                <h2 className="text-lg font-bold">Recent Uploads</h2>
+                <p className="text-sm text-muted-foreground">
+                  Upload history for this session
+                </p>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Run-level ingestion history will appear here once job tracking
-                  is enabled.
-                </p>
+                {uploadHistory.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <FileSpreadsheet className="mx-auto h-10 w-10 text-muted-foreground/50" />
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      No uploads yet this session. Upload a CSV above to get
+                      started.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {uploadHistory.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className="py-3 flex items-center justify-between"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">
+                            {entry.filename}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {entry.timestamp.toLocaleTimeString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {entry.created} created
+                          </Badge>
+                          {entry.errorsCount > 0 && (
+                            <Badge variant="destructive" className="text-xs">
+                              {entry.errorsCount} error
+                              {entry.errorsCount !== 1 ? "s" : ""}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </>
