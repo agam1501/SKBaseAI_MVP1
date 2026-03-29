@@ -19,6 +19,7 @@ export type Ticket = {
   created_at: string;
   updated_at: string;
   resolved_at: string | null;
+  enrichment_status: string | null;
 };
 
 export type Taxonomy = {

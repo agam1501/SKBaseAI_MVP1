@@ -2,6 +2,7 @@ import csv
 import io
 import logging
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import JSONResponse
@@ -301,6 +302,7 @@ async def update_ticket_status(
         raise HTTPException(status_code=404, detail="Ticket not found")
     ticket.status = body.status
     ticket.is_resolved = body.is_resolved
+    ticket.resolved_at = datetime.now(timezone.utc) if body.is_resolved else None
     await db.commit()
     await db.refresh(ticket)
     return ticket

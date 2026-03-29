@@ -376,6 +376,22 @@ export default function TicketDetailPage() {
                   TEST
                 </Badge>
               )}
+              {ticket.enrichment_status && (
+                <Badge
+                  variant="outline"
+                  className={`text-xs ${
+                    ticket.enrichment_status === "COMPLETED"
+                      ? "border-green-200 bg-green-50 text-green-700"
+                      : ticket.enrichment_status === "PROCESSING"
+                        ? "border-blue-200 bg-blue-50 text-blue-700"
+                        : ticket.enrichment_status === "PENDING"
+                          ? "border-amber-200 bg-amber-50 text-amber-700"
+                          : "border-red-200 bg-red-50 text-red-700"
+                  }`}
+                >
+                  {ticket.enrichment_status}
+                </Badge>
+              )}
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
